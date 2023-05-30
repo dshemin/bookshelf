@@ -1,21 +1,15 @@
 mod config;
 
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::filter::{EnvFilter, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    info!("aaa");
-    HttpResponse::Ok().body(req_body)
+#[get("/healthz")]
+async fn healthz() -> impl Responder {
+    HttpResponse::Ok()
 }
 
 #[actix_web::main]
@@ -26,15 +20,10 @@ async fn main() -> std::io::Result<()> {
 
     info!("Started");
 
-    HttpServer::new(move || {
-        App::new()
-            .wrap(TracingLogger::default())
-            .service(hello)
-            .service(echo)
-    })
-    .bind((cfg.http.host, cfg.http.port))?
-    .run()
-    .await
+    HttpServer::new(move || App::new().wrap(TracingLogger::default()).service(healthz))
+        .bind((cfg.http.host, cfg.http.port))?
+        .run()
+        .await
 }
 
 fn init_telemetry() -> anyhow::Result<()> {
