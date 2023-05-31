@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_with::with_prefix;
 
 with_prefix!(http_config "http_");
+
 #[derive(Deserialize, Debug, Default)]
 pub struct Config {
     #[serde(flatten, with = "http_config")]
@@ -29,8 +30,7 @@ fn default_port() -> u16 {
 // Collects all configuration parameters.
 pub fn collect() -> Result {
     loadenv()?;
-
-    envy::prefixed("BS_API_").from_env().map_err(|e| anyhow!(e))
+    fill()
 }
 
 fn loadenv() -> anyhow::Result<()> {
@@ -42,6 +42,10 @@ fn loadenv() -> anyhow::Result<()> {
         Err(e) => Err(anyhow!(e)),
         Ok(_) => Ok(()),
     }
+}
+
+fn fill() -> Result {
+    envy::prefixed("BS_API_").from_env().map_err(|e| anyhow!(e))
 }
 
 type Result = anyhow::Result<Config>;
