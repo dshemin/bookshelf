@@ -52,15 +52,9 @@ async fn run_http_server(host: String, port: u16, jwt_pub_key: String) -> std::i
     let key = Box::new(DecodingKey::from_rsa_pem(jwt_pub_key.as_bytes()).map_err(to_std_io_err)?);
 
     HttpServer::new(move || {
-        let keycloak_auth = KeycloakAuth::default_with_pk(*(key.clone()));
-
         App::new()
             .wrap(TracingLogger::default())
-            .service(
-                web::scope("/api")
-                    .wrap(keycloak_auth)
-                    .service(web::scope("/shelfs").service(shelfs_list)),
-            )
+            .configure(configure_api(*(key.clone())))
             .service(healthz)
     })
     .bind((host, port))?
@@ -70,4 +64,16 @@ async fn run_http_server(host: String, port: u16, jwt_pub_key: String) -> std::i
 
 fn to_std_io_err<E: ToString>(e: E) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
+}
+
+fn configure_api(key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
+    let keycloak_auth = KeycloakAuth::default_with_pk(key);
+
+    Box::new(|cfg: &mut web::ServiceConfig| {
+        cfg.service(
+            web::scope("/api")
+                .wrap(keycloak_auth)
+                .service(web::scope("/shelfs").service(shelfs_list)),
+        );
+    })
 }
