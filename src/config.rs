@@ -9,6 +9,7 @@ with_prefix!(http_config "http_");
 pub struct Config {
     #[serde(flatten, with = "http_config")]
     pub http: HTTPConfig,
+    pub jwt_pub_key: String,
 }
 
 #[derive(Deserialize, Debug, Default)]
@@ -37,7 +38,7 @@ fn loadenv() -> anyhow::Result<()> {
     use std::io::ErrorKind::NotFound;
 
     match dotenv() {
-        // This is normal situation, .env file might not present at all.
+        // Dotenv file might not present at all.
         Err(dotenv::Error::Io(e)) if e.kind() == NotFound => Ok(()),
         Err(e) => Err(anyhow!(e)),
         Ok(_) => Ok(()),
