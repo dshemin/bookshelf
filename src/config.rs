@@ -4,12 +4,15 @@ use serde::Deserialize;
 use serde_with::with_prefix;
 
 with_prefix!(http_config "http_");
+with_prefix!(pg_config "pg_");
 
 #[derive(Deserialize, Debug, Default)]
 pub struct Config {
     #[serde(flatten, with = "http_config")]
     pub http: HTTPConfig,
     pub jwt_pub_key: String,
+    #[serde(flatten, with = "pg_config")]
+    pub pg: PGConfig,
 }
 
 #[derive(Deserialize, Debug, Default)]
@@ -26,6 +29,16 @@ fn default_host() -> String {
 
 fn default_port() -> u16 {
     8080
+}
+
+#[derive(Deserialize, Debug, Default)]
+pub struct PGConfig {
+    #[serde(default = "default_conn_uri")]
+    pub conn_uri: String,
+}
+
+fn default_conn_uri() -> String {
+    "postgres://postgres:123456@127.0.0.1/bookshelf".to_string()
 }
 
 // Collects all configuration parameters.
