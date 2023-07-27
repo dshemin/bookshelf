@@ -1,0 +1,88 @@
+@startuml Storage
+
+package "Without factory" {
+    class StorageModel {
+        +id: Uuid
+        +name: String
+        +settings: Json
+
+        + to_entity(): Storage
+    }
+
+    enum Settings {
+        FS
+    }
+
+    class Storage {
+        -id: Uuid
+        -name: string
+        -settings: Settings
+
+        +id(): Uuid
+        +name(): String
+        +connect(): ConnectedStorage
+    }
+
+    class ConnectedStorage {
+        -engine: Engine
+    }
+
+    interface Engine {
+
+    }
+
+    class FS {
+
+    }
+
+    FS ..|> Engine
+    ConnectedStorage --o Engine
+}
+
+package "With factory" {
+    class StorageModel2 {
+        +id: Uuid
+        +name: String
+        +settings: Json
+    }
+
+    class Transformer {
+        +transform(StorageModel2): Storage2
+    }
+
+    interface Factory {
+        +create(): Engine2
+    }
+
+    class FSFactory {
+        +create(): FS2
+    }
+
+    class Storage2 {
+        -id: Uuid
+        -name: string
+        -factory: Factory
+
+        +id(): Uuid
+        +name(): String
+        +connect(): ConnectedStorage2
+    }
+
+    class ConnectedStorage2 {
+        -engine: Engine
+    }
+
+    interface Engine2 {
+
+    }
+
+    class FS2 {
+
+    }
+
+    FSFactory ..|> Factory
+    FS2 ..|> Engine2
+    Storage2 --o Factory
+    ConnectedStorage2 --o Engine2
+}
+@enduml
