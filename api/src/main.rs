@@ -1,22 +1,15 @@
 mod config;
 mod telemetry;
 mod version;
+mod endpoints;
 
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use sqlx::postgres::{PgPool, PgPoolOptions};
+use actix_web::{web, App, HttpServer};
 use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth};
-use sea_orm::{Database, DatabaseConnection};
 use tracing::info;
 use tracing_actix_web::TracingLogger;
-
-#[get("/healthz")]
-async fn healthz() -> impl Responder {
-    HttpResponse::Ok()
-}
-
-#[get("")]
-async fn shelfs_list(state: AppState) -> impl Responder {
-    HttpResponse::Ok()
-}
+use application::user::{service as user_services, repository as user_repository};
+use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -24,38 +17,65 @@ async fn main() -> std::io::Result<()> {
 
     let cfg = config::collect().map_err(to_std_io_err)?;
 
-    let db = Database::connect(&cfg.pg.conn_uri)
-        .await
-        .map_err(to_std_io_err)?;
-
     info!(config = tracing::field::debug(&cfg), "Started");
 
-    run_http_server(cfg.http.host, cfg.http.port, cfg.jwt_pub_key, db).await
+    let pool = PgPoolOptions::new().connect(&cfg.pg.conn_uri).await.map_err(to_std_io_err)?;
+
+    let state = AppStateInner::new(&pool);
+
+    run_http_server(cfg.http.host, cfg.http.port, cfg.jwt_pub_key, state).await
 }
 
 #[derive(Debug, Clone)]
-struct AppStateInner {
-    conn: DatabaseConnection,
+pub struct AppStateInner {
+    pub user_services: Arc<UserServices>,
 }
 
-type AppState = web::Data<AppStateInner>;
+impl AppStateInner {
+    fn new(pool: &PgPool) -> Self {
+        let user_services = Arc::new(UserServices::new(pool));
+
+        Self {
+            user_services,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct UserServices{
+    pub sync: Arc<user_services::Sync>,
+}
+
+impl UserServices {
+    fn new(pool: &PgPool) -> Self {
+        let repository = Box::new(user_repository::pg::Repository::new(pool.clone()));
+
+        let sync = Arc::new(user_services::Sync::new(repository));
+
+        Self {
+            sync,
+        }
+    }
+}
+
+pub type AppState = web::Data<AppStateInner>;
 
 async fn run_http_server(
     host: String,
     port: u16,
     jwt_pub_key: String,
-    db: DatabaseConnection,
+    state: AppStateInner,
 ) -> std::io::Result<()> {
     let key = Box::new(DecodingKey::from_rsa_pem(jwt_pub_key.as_bytes()).map_err(to_std_io_err)?);
 
-    let app_state = AppStateInner { conn: db };
+    let state = AppState::new(state);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(app_state.clone()))
+            .app_data(state.clone())
             .wrap(TracingLogger::default())
             .configure(configure_api(*(key.clone())))
-            .service(healthz)
+            .service(endpoints::telemetry::healthz)
     })
     .bind((host, port))?
     .run()
@@ -70,10 +90,11 @@ fn configure_api(key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
     let keycloak_auth = KeycloakAuth::default_with_pk(key);
 
     Box::new(|cfg: &mut web::ServiceConfig| {
-        cfg.service(
-            web::scope("/api")
-                .wrap(keycloak_auth)
-                .service(web::scope("/shelfs").service(shelfs_list)),
-        );
+        cfg
+            .service(
+                web::scope("/api")
+                    .wrap(keycloak_auth)
+                    .service(web::scope("/users").service(endpoints::users::sync))
+            );
     })
 }

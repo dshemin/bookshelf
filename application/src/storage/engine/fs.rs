@@ -1,15 +1,8 @@
 use std::path::PathBuf;
 
-use async_trait::async_trait;
 use thiserror::Error;
 use tokio::io::{self, AsyncRead};
 use tokio::fs::{File, remove_file, try_exists};
-
-use crate::storage::engine::{
-    Engine as EngineTrait,
-    PutResult,
-    DeleteResult,
-};
 
 /// Represents file system engine.
 ///
@@ -18,7 +11,8 @@ use crate::storage::engine::{
 /// It not optimal but deadly simple and will be more then enough for small
 /// amount of books.
 #[derive(Debug)]
-pub(crate) struct Engine{
+pub struct Engine{
+    /// Base directory where all files will be placed.
     base_path: PathBuf,
 }
 
@@ -29,13 +23,7 @@ impl Engine {
     ///
     /// Will return an error if provided base path pointed on file not a directory.
     /// Or can't create the base directory.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// infrastructure::storage::fs::Engine::new("/tmp/dir").unwrap();
-    /// ```
-    pub(crate) fn new<T>(base_path: T) -> Result<Self, FSNewError>
+    pub fn new<T>(base_path: T) -> Result<Self, FSNewError>
         where
             T: Into<PathBuf>
     {
@@ -61,6 +49,43 @@ impl Engine {
 
         Ok(())
     }
+
+    /// Puts a bytes from given async reader to the storage with given name.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if failed read from given source or write to
+    /// the file.
+    pub async fn put<R>(&self, name: &str, source: &mut R) -> Result<PathBuf, anyhow::Error>
+    where
+        R: AsyncRead + Unpin + Send
+    {
+        let path = {
+            let mut p = self.base_path.clone();
+            p.push(name);
+            p
+        };
+
+        let mut dest = File::create(&path).await?;
+
+        io::copy(source, &mut dest).await?;
+
+        Ok(path)
+    }
+
+    /// Deletes a file under the given path from the storage.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if failed to delete required file.
+    pub async fn delete(&self, path: String) -> Result<(), anyhow::Error> {
+        let path: PathBuf = path.into();
+
+        if try_exists(&path).await? {
+            remove_file(&path).await?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Error)]
@@ -72,45 +97,13 @@ pub enum FSNewError {
     FailedToCreateBaseDir(#[from] std::io::Error),
 }
 
-#[async_trait]
-impl EngineTrait for Engine {
-    type Path = String;
-
-    async fn put<R>(&self, name: &str, source: &mut R) -> PutResult<Self::Path>
-    where
-        R: AsyncRead + Unpin + Send
-    {
-        let path = {
-            let mut p = self.base_path.clone();
-            p.extend(&[name]);
-            p
-        };
-
-        let mut dest = File::create(&path).await?;
-
-        io::copy(source, &mut dest).await?;
-
-        Ok(String::from(path.to_string_lossy()))
-    }
-
-    async fn delete(&self, path: Self::Path) -> DeleteResult {
-        let path: PathBuf = path.into();
-
-        if try_exists(&path).await? {
-            remove_file(&path).await?;
-        }
-        Ok(())
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use scopeguard::defer;
 
-    mod fsengine{
+    mod engine{
         use std::pin::Pin;
         use std::task::{Context, Poll};
 

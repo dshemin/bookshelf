@@ -1,41 +1,32 @@
-pub mod fs;
-use async_trait::async_trait;
-use thiserror::Error;
-use tokio::io::{self, AsyncRead};
+pub(super) mod fs;
 
-/// Represents the storage engine.
-/// Engine contains low-level implementation of file manipulation.
-#[async_trait]
-pub(crate) trait Engine {
-    type Path;
+use tokio::io::AsyncRead;
+use super::engine::fs::Engine as FSEngine;
+use super::entity::Path;
 
-    /// Puts file to storage.
-    async fn put<R>(&self, name: &str, source: &mut R) -> PutResult<Self::Path>
+/// The engine.
+/// An enum for all available engines.
+pub enum Engine{
+    FS(FSEngine),
+}
+
+impl Engine {
+    /// Puts a data to the storage.
+    pub async fn put<R>(&self, name: &str, source: &mut R) -> Result<Path, anyhow::Error>
     where
-        R: AsyncRead + Unpin + Send;
+        R: AsyncRead + Unpin + Send
+    {
+        let path = match self {
+            Self::FS(engine) => Path::FS(engine.put(name, source).await?)
+        };
 
-    /// Deletes file from storage.
-    async fn delete(&self, path: Self::Path) -> DeleteResult;
-}
+        Ok(path)
+    }
 
-pub(crate) type PutResult<Path> = Result<Path, PutError>;
-
-#[derive(Debug, Error)]
-pub(crate) enum PutError {
-    #[error("IO failed")]
-    IO(#[from] io::Error),
-}
-
-pub(crate) type DeleteResult = Result<(), DeleteError>;
-
-#[derive(Debug, Error)]
-pub(crate) enum DeleteError {
-    #[error("IO failed")]
-    IO(#[from] io::Error),
-}
-
-pub(crate) trait Factory {
-    type Engine: Engine;
-
-    fn create(&self) -> Result<Self::Engine, anyhow::Error>;
+    /// Deletes a file under the path.
+    pub async fn delete(&self, path: String) -> Result<(), anyhow::Error> {
+        match self {
+            Self::FS(engine) => engine.delete(path).await
+        }
+    }
 }
