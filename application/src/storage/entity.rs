@@ -96,10 +96,11 @@ impl Storage {
 }
 
 /// Settings for the storage.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Settings {
     /// Settings for filesystem storage.
+    #[serde(rename = "fs")]
     FS {
         /// Path to the directory where all uploaded books will be stored.
         base_path: String,
