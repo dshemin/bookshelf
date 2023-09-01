@@ -13,10 +13,11 @@ pub type ID = Uuid;
 ///
 /// Holds all information about connected storage and provide a method to connect
 /// to it.
+#[derive(Serialize)]
 pub struct Storage {
-    id: ID,
-    name: String,
-    settings: Settings,
+    pub(crate) id: ID,
+    pub(crate) name: String,
+    pub(crate) settings: Settings,
 }
 
 impl Storage {

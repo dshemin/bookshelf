@@ -2,11 +2,12 @@ pub mod service;
 pub mod repository;
 
 use async_trait::async_trait;
+use derive_new::new;
 use parse_display::{Display, FromStr};
 
 pub type ID = uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, new)]
 pub struct User {
     id: ID,
     role: Role,
@@ -20,13 +21,6 @@ pub enum Role {
 }
 
 impl User {
-    pub fn new(id: ID, role: Role) -> Self {
-        Self {
-            id,
-            role,
-        }
-    }
-
     pub fn id(&self) -> &ID { &self.id }
     pub fn role(&self) -> &Role { &self.role }
 }
