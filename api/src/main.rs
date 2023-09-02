@@ -9,7 +9,7 @@ use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth};
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 use application::user::{service as user_services, repository as user_repository};
-use application::storage::{service as storage_services, repository as storage_repository, self};
+use application::storage::{service as storage_services, repository as storage_repository};
 use std::sync::Arc;
 
 #[actix_web::main]
@@ -118,7 +118,7 @@ fn configure_api(key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
         cfg
             .service(
                 web::scope("/api")
-                    // .wrap(keycloak_auth)
+                    .wrap(keycloak_auth)
                     .service(
                         web::scope("/users")
                             .service(endpoints::users::sync)

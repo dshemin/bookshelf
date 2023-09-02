@@ -5,7 +5,7 @@ fn main() {
 }
 
 fn git_hash() -> anyhow::Result<String> {
-    let output = Command::new("git").args(&["rev-parse", "HEAD"]).output()?;
+    let output = Command::new("git").args(["rev-parse", "HEAD"]).output()?;
     let git_hash = String::from_utf8(output.stdout)?;
 
     Ok(git_hash)

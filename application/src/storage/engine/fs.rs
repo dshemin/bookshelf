@@ -180,7 +180,7 @@ mod tests {
 
                 assert!(base_path.exists());
                 assert_eq!("some data".as_bytes(), read(&expected_path).await.unwrap());
-                assert_eq!(expected_path, PathBuf::from(actual_path));
+                assert_eq!(expected_path, actual_path);
             }
         }
 

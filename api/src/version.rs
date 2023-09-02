@@ -1,1 +1,1 @@
-pub static GIT_HASH: &'static str = env!("GIT_HASH");
+pub static GIT_HASH: &str = env!("GIT_HASH");

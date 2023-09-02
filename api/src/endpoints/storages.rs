@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, HttpResponse, Responder, http::header::ContentType};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use crate::AppState;
 use tracing::{debug, error};
 use serde::Deserialize;
