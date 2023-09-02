@@ -12,7 +12,7 @@ pub mod user;
 /// Max number of data per request to DB.
 pub(crate) const LIMIT: usize = 25;
 
-#[derive(Debug, Default, new, Clone)]
+#[derive(Debug, Default, new, Clone, PartialEq)]
 pub struct Cursor {
     last_id: Option<Uuid>,
 }
@@ -93,12 +93,19 @@ pub struct PaginatedData<T> {
 mod test {
     use super::*;
 
-    mod Cursor {
+    mod cursor {
         use super::*;
 
         #[test]
-        fn deserialize() {
+        fn serialize_deserialize() {
+            let expected = Cursor {
+                last_id: Some(Uuid::new_v4()),
+            };
 
+            let s = serde_json::to_string(&expected).unwrap();
+            let actual: Cursor = serde_json::from_str(&s).unwrap();
+
+            assert_eq!(expected, actual);
         }
     }
 }
