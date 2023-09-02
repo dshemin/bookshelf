@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::{QueryBuilder, types, query, Row};
 use sqlx::postgres::{PgPool, PgRow};
 use crate::storage::{self, Storage, Settings};
-use crate::PaginatedData;
+use crate::{PaginatedData, LIMIT};
 use futures::{future, TryStreamExt};
 
 pub struct Repository {
@@ -37,9 +37,11 @@ impl storage::Repository for Repository {
             qb.push_bind(id);
         }
 
+        qb.push(format!(r#" ORDER BY "id" LIMIT {}"#, LIMIT));
+
         let stream = qb.build().fetch(&self.pool);
 
-        let mut res = Vec::new();
+        let mut storages = Vec::new();
 
         stream
             .try_for_each(|row: PgRow| {
@@ -51,14 +53,22 @@ impl storage::Repository for Repository {
                     settings: settings.0,
                 };
 
-                res.push(s);
+                storages.push(s);
                 future::ready(Ok(()))
             })
             .await?;
 
-        Ok(PaginatedData {
-            data: res,
+        let mut res = PaginatedData {
+            data: storages,
             cursor: None,
-        })
+        };
+
+        if res.data.len() == LIMIT {
+            if let Some(v) = res.data.last() {
+                res.cursor = Some(crate::Cursor::new(Some(v.id)));
+            }
+        }
+
+        Ok(res)
     }
 }

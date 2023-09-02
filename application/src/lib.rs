@@ -9,6 +9,9 @@ use serde::de::{Deserialize as DeserializeTrait, Deserializer};
 pub mod storage;
 pub mod user;
 
+/// Max number of data per request to DB.
+pub(crate) const LIMIT: usize = 25;
+
 #[derive(Debug, Default, new, Clone)]
 pub struct Cursor {
     last_id: Option<Uuid>,
