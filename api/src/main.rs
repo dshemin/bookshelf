@@ -47,14 +47,14 @@ impl AppStateInner {
 
 #[derive(Debug)]
 pub struct UserServices{
-    pub sync: Arc<user_services::Sync>,
+    pub sync: user_services::Sync,
 }
 
 impl UserServices {
     fn new(pool: &PgPool) -> Self {
         let repository = Box::new(user_repository::pg::Repository::new(pool.clone()));
 
-        let sync = Arc::new(user_services::Sync::new(repository));
+        let sync = user_services::Sync::new(repository);
 
         Self {
             sync,
@@ -64,8 +64,8 @@ impl UserServices {
 
 #[derive(Debug)]
 pub struct StorageServices{
-    pub create: Arc<storage_services::Create>,
-    pub list: Arc<storage_services::List>,
+    pub create: storage_services::Create,
+    pub list: storage_services::List,
 }
 
 impl StorageServices {
@@ -73,8 +73,8 @@ impl StorageServices {
         let repository1 = Box::new(storage_repository::pg::Repository::new(pool.clone()));
         let repository2 = Box::new(storage_repository::pg::Repository::new(pool.clone()));
 
-        let create = Arc::new(storage_services::Create::new(repository1));
-        let list = Arc::new(storage_services::List::new(repository2));
+        let create = storage_services::Create::new(repository1);
+        let list = storage_services::List::new(repository2);
 
         Self {
             create,

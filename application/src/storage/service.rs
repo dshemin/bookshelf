@@ -9,7 +9,7 @@ use super::Storage;
 /// Creates new storage.
 #[derive(new)]
 pub struct Create {
-    storages_repository: Box<dyn storage::Repository + Send + std::marker::Sync>,
+    storages_repository: Repository,
 }
 
 impl Create {
@@ -31,7 +31,7 @@ impl std::fmt::Debug for Create {
 
 #[derive(new)]
 pub struct List {
-    storages_repository: Box<dyn storage::Repository + Send + std::marker::Sync>,
+    storages_repository: Repository,
 }
 
 impl List {
@@ -45,3 +45,5 @@ impl std::fmt::Debug for List {
         Ok(())
     }
 }
+
+type Repository = Box<dyn storage::Repository + Send + std::marker::Sync>;

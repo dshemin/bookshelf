@@ -7,7 +7,7 @@ use crate::user::{self, User};
 /// Synchronize user from remote source to the application.
 #[derive(new)]
 pub struct Sync {
-    users_repository: Box<dyn user::Repository + Send + std::marker::Sync>,
+    users_repository: Repository,
 }
 
 impl Sync {
@@ -22,3 +22,5 @@ impl std::fmt::Debug for Sync {
         Ok(())
     }
 }
+
+type Repository = Box<dyn user::Repository + Send + std::marker::Sync>;
