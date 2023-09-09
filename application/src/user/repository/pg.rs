@@ -3,6 +3,7 @@ use sqlx::postgres::PgPool;
 use sqlx::{query, query_as};
 use crate::user::{self, User};
 
+#[derive(Clone)]
 pub struct Repository {
     pool: PgPool,
 }

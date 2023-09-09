@@ -70,11 +70,10 @@ pub struct StorageServices{
 
 impl StorageServices {
     fn new(pool: &PgPool) -> Self {
-        let repository1 = Box::new(storage_repository::pg::Repository::new(pool.clone()));
-        let repository2 = Box::new(storage_repository::pg::Repository::new(pool.clone()));
+        let repository = Box::new(storage_repository::pg::Repository::new(pool.clone()));
 
-        let create = storage_services::Create::new(repository1);
-        let list = storage_services::List::new(repository2);
+        let create = storage_services::Create::new(repository.clone());
+        let list = storage_services::List::new(repository);
 
         Self {
             create,
@@ -118,7 +117,7 @@ fn configure_api(key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
         cfg
             .service(
                 web::scope("/api")
-                    .wrap(keycloak_auth)
+                    // .wrap(keycloak_auth)
                     .service(
                         web::scope("/users")
                             .service(endpoints::users::sync)
