@@ -24,7 +24,7 @@ async fn main() -> std::io::Result<()> {
 
     let state = AppStateInner::new(&pool);
 
-    run_http_server(cfg.http.host, cfg.http.port, cfg.jwt_pub_key, state).await
+    run_http_server(cfg.http.host, cfg.http.port, cfg.jwt_pub_key, cfg.enable_auth, state).await
 }
 
 #[derive(Debug, Clone)]
@@ -88,6 +88,7 @@ async fn run_http_server(
     host: String,
     port: u16,
     jwt_pub_key: String,
+    enable_auth: bool,
     state: AppStateInner,
 ) -> std::io::Result<()> {
     let key = Box::new(DecodingKey::from_rsa_pem(jwt_pub_key.as_bytes()).map_err(to_std_io_err)?);
@@ -98,7 +99,7 @@ async fn run_http_server(
         App::new()
             .app_data(state.clone())
             .wrap(TracingLogger::default())
-            .configure(configure_api(*(key.clone())))
+            .configure(configure_api(enable_auth, *(key.clone())))
             .service(endpoints::telemetry::healthz)
     })
     .bind((host, port))?
@@ -110,23 +111,30 @@ fn to_std_io_err<E: ToString>(e: E) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
 }
 
-fn configure_api(key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
-    let keycloak_auth = KeycloakAuth::default_with_pk(key);
+fn configure_api(enable_auth: bool, key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
+    Box::new(move |cfg: &mut web::ServiceConfig| {
+        let default_headers = actix_web::middleware::DefaultHeaders::new()
+            .add(("Content-Type", "application/json"));
 
-    Box::new(|cfg: &mut web::ServiceConfig| {
-        cfg
-            .service(
-                web::scope("/api")
-                    // .wrap(keycloak_auth)
-                    .service(
-                        web::scope("/users")
-                            .service(endpoints::users::sync)
-                    )
-                    .service(
-                        web::scope("/storages")
-                            .service(endpoints::storages::create)
-                            .service(endpoints::storages::list)
-                    )
-            );
+        let keycloak_auth = KeycloakAuth::default_with_pk(key);
+
+        let api = web::scope("/api")
+            .wrap(default_headers)
+            .wrap(actix_web::middleware::Condition::new(enable_auth, keycloak_auth))
+            .service(setup_users_endpoints())
+            .service(setup_storages_endpoints());
+
+        cfg.service(api);
     })
+}
+
+fn setup_users_endpoints() -> actix_web::Scope {
+    web::scope("/users")
+        .service(endpoints::users::sync)
+}
+
+fn setup_storages_endpoints() -> actix_web::Scope {
+    web::scope("/storages")
+        .service(endpoints::storages::create)
+        .service(endpoints::storages::list)
 }

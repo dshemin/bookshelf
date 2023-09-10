@@ -1,13 +1,15 @@
 use anyhow::anyhow;
 use dotenv::dotenv;
 use serde::Deserialize;
-use serde_with::with_prefix;
+use serde_with::{with_prefix, serde_as, DisplayFromStr};
 
 with_prefix!(http_config "http_");
 with_prefix!(pg_config "pg_");
 
 #[derive(Deserialize, Debug, Default)]
 pub struct Config {
+    #[serde(default = "default_enable_auth")]
+    pub enable_auth: bool,
     #[serde(flatten, with = "http_config")]
     pub http: HTTPConfig,
     pub jwt_pub_key: String,
@@ -15,10 +17,16 @@ pub struct Config {
     pub pg: PGConfig,
 }
 
+fn default_enable_auth() -> bool {
+    true
+}
+
+#[serde_as]
 #[derive(Deserialize, Debug, Default)]
 pub struct HTTPConfig {
     #[serde(default = "default_host")]
     pub host: String,
+    #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_port")]
     pub port: u16,
 }
@@ -28,7 +36,7 @@ fn default_host() -> String {
 }
 
 fn default_port() -> u16 {
-    8080
+    80
 }
 
 #[derive(Deserialize, Debug, Default)]
@@ -59,7 +67,8 @@ fn loadenv() -> anyhow::Result<()> {
 }
 
 fn fill() -> Result {
-    envy::prefixed("BS_API_").from_env().map_err(|e| anyhow!(e))
+    let cfg = envy::prefixed("BS_API_").from_env()?;
+    Ok(cfg)
 }
 
 type Result = anyhow::Result<Config>;
