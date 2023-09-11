@@ -5,7 +5,7 @@ use crate::storage::{self, Storage, Settings};
 use crate::{PaginatedData, LIMIT};
 use futures::{future, TryStreamExt};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Repository {
     pool: PgPool,
 }

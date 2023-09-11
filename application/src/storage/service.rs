@@ -7,7 +7,7 @@ use super::Storage;
 /// Create service.
 ///
 /// Creates new storage.
-#[derive(new)]
+#[derive(Debug, new)]
 pub struct Create {
     storages_repository: Repository,
 }
@@ -23,13 +23,7 @@ impl Create {
     }
 }
 
-impl std::fmt::Debug for Create {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Ok(())
-    }
-}
-
-#[derive(new)]
+#[derive(Debug, new)]
 pub struct List {
     storages_repository: Repository,
 }
@@ -37,12 +31,6 @@ pub struct List {
 impl List {
     pub async fn list(&self, cursor: Option<Cursor>) -> anyhow::Result<PaginatedData<Storage>> {
         self.storages_repository.get(cursor.and_then(|x| { x.last_id })).await
-    }
-}
-
-impl std::fmt::Debug for List {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Ok(())
     }
 }
 
