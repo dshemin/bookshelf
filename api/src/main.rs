@@ -8,7 +8,6 @@ use actix_web::{web, App, HttpServer};
 use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth};
 use tracing::info;
 use tracing_actix_web::TracingLogger;
-use application::user::{service as user_services, repository as user_repository};
 use application::storage::{service as storage_services, repository as storage_repository};
 use std::sync::Arc;
 
@@ -29,35 +28,15 @@ async fn main() -> std::io::Result<()> {
 
 #[derive(Debug, Clone)]
 pub struct AppStateInner {
-    pub user_services: Arc<UserServices>,
     pub storage_services: Arc<StorageServices>,
 }
 
 impl AppStateInner {
     fn new(pool: &PgPool) -> Self {
-        let user_services = Arc::new(UserServices::new(pool));
         let storage_services = Arc::new(StorageServices::new(pool));
 
         Self {
-            user_services,
             storage_services
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct UserServices{
-    pub sync: user_services::Sync,
-}
-
-impl UserServices {
-    fn new(pool: &PgPool) -> Self {
-        let repository = Box::new(user_repository::pg::Repository::new(pool.clone()));
-
-        let sync = user_services::Sync::new(repository);
-
-        Self {
-            sync,
         }
     }
 }
@@ -121,16 +100,10 @@ fn configure_api(enable_auth: bool, key: DecodingKey) -> Box<dyn FnOnce(&mut web
         let api = web::scope("/api")
             .wrap(default_headers)
             .wrap(actix_web::middleware::Condition::new(enable_auth, keycloak_auth))
-            .service(setup_users_endpoints())
             .service(setup_storages_endpoints());
 
         cfg.service(api);
     })
-}
-
-fn setup_users_endpoints() -> actix_web::Scope {
-    web::scope("/users")
-        .service(endpoints::users::sync)
 }
 
 fn setup_storages_endpoints() -> actix_web::Scope {
