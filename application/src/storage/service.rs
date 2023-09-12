@@ -30,7 +30,18 @@ pub struct List {
 
 impl List {
     pub async fn list(&self, cursor: Option<Cursor>) -> anyhow::Result<PaginatedData<Storage>> {
-        self.storages_repository.get(cursor.and_then(|x| { x.last_id })).await
+        self.storages_repository.list(cursor.and_then(|x| { x.last_id })).await
+    }
+}
+
+#[derive(Debug, new)]
+pub struct Get {
+    storages_repository: Repository,
+}
+
+impl Get {
+    pub async fn get(&self, id: storage::ID) -> anyhow::Result<Option<Storage>> {
+        self.storages_repository.get(id).await
     }
 }
 

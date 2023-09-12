@@ -45,6 +45,7 @@ impl AppStateInner {
 pub struct StorageServices{
     pub create: storage_services::Create,
     pub list: storage_services::List,
+    pub get: storage_services::Get,
 }
 
 impl StorageServices {
@@ -52,11 +53,13 @@ impl StorageServices {
         let repository = Box::new(storage_repository::pg::Repository::new(pool.clone()));
 
         let create = storage_services::Create::new(repository.clone());
-        let list = storage_services::List::new(repository);
+        let list = storage_services::List::new(repository.clone());
+        let get = storage_services::Get::new(repository);
 
         Self {
             create,
             list,
+            get,
         }
     }
 }
@@ -110,4 +113,5 @@ fn setup_storages_endpoints() -> actix_web::Scope {
     web::scope("/storages")
         .service(endpoints::storages::create)
         .service(endpoints::storages::list)
+        .service(endpoints::storages::get)
 }

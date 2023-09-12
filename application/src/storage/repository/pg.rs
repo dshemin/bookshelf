@@ -18,6 +18,18 @@ impl Repository {
     }
 }
 
+impl Repository {
+    fn hydrate(row: PgRow) -> Storage {
+        let settings: types::Json<Settings> = row.get("settings");
+
+        Storage {
+            id: row.get("id"),
+            name: row.get("name"),
+            settings: settings.0,
+        }
+    }
+}
+
 #[async_trait]
 impl storage::Repository for Repository {
     async fn insert(&self, dto: &storage::InsertDTO) -> anyhow::Result<()> {
@@ -30,7 +42,7 @@ impl storage::Repository for Repository {
         Ok(())
     }
 
-    async fn get(&self, from: Option<storage::ID>) -> anyhow::Result<PaginatedData<Storage>> {
+    async fn list(&self, from: Option<storage::ID>) -> anyhow::Result<PaginatedData<Storage>> {
         let mut qb = QueryBuilder::new(r#"SELECT * FROM "storages""#);
 
         if let Some(id) = from {
@@ -46,13 +58,7 @@ impl storage::Repository for Repository {
 
         stream
             .try_for_each(|row: PgRow| {
-                let settings: types::Json<Settings> = row.get("settings");
-
-                let s = Storage {
-                    id: row.get("id"),
-                    name: row.get("name"),
-                    settings: settings.0,
-                };
+                let s = Self::hydrate(row);
 
                 storages.push(s);
                 future::ready(Ok(()))
@@ -71,5 +77,14 @@ impl storage::Repository for Repository {
         }
 
         Ok(res)
+    }
+
+    async fn get(&self, id: storage::ID) -> anyhow::Result<Option<Storage>> {
+        let row = query(r#"SELECT * FROM "storages" WHERE ID = $1"#)
+            .bind(id)
+            .fetch_optional(&self.pool).await?;
+
+        let row = row.map(Self::hydrate);
+        Ok(row)
     }
 }

@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use crate::AppState;
 use tracing::{debug, error};
 use serde::Deserialize;
-use application::storage::Settings;
+use application::storage::{self, Settings};
 
 
 #[post("")]
@@ -50,4 +50,24 @@ pub async fn list(state: AppState, query: web::Query<Paging>) -> impl Responder 
 #[derive(Debug, Deserialize)]
 pub struct Paging {
     cursor: Option<application::Cursor>,
+}
+
+#[get("/{id}")]
+pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
+    error!(req=tracing::field::debug(&path), "get storages");
+
+    let id = path.into_inner();
+
+    let res = state.storage_services.get.get(id).await;
+
+    match res {
+        Ok(v) => match v {
+            Some(v) => HttpResponse::Ok().json(v),
+            None => HttpResponse::NotFound().finish(),
+        },
+        Err(e) => {
+            error!(err=e.to_string(), "failed to get storage");
+            HttpResponse::InternalServerError().finish()
+        }
+    }
 }
