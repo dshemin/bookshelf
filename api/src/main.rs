@@ -46,6 +46,7 @@ pub struct StorageServices{
     pub create: storage_services::Create,
     pub list: storage_services::List,
     pub get: storage_services::Get,
+    pub delete: storage_services::Delete,
 }
 
 impl StorageServices {
@@ -54,12 +55,14 @@ impl StorageServices {
 
         let create = storage_services::Create::new(repository.clone());
         let list = storage_services::List::new(repository.clone());
-        let get = storage_services::Get::new(repository);
+        let get = storage_services::Get::new(repository.clone());
+        let delete = storage_services::Delete::new(repository);
 
         Self {
             create,
             list,
             get,
+            delete,
         }
     }
 }
@@ -114,4 +117,5 @@ fn setup_storages_endpoints() -> actix_web::Scope {
         .service(endpoints::storages::create)
         .service(endpoints::storages::list)
         .service(endpoints::storages::get)
+        .service(endpoints::storages::delete)
 }

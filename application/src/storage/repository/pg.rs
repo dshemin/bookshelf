@@ -87,4 +87,12 @@ impl storage::Repository for Repository {
         let row = row.map(Self::hydrate);
         Ok(row)
     }
+
+    async fn delete(&self, id: storage::ID) -> anyhow::Result<()> {
+        query(r#"DELETE FROM "storages" WHERE ID = $1"#)
+            .bind(id)
+            .execute(&self.pool).await?;
+
+        Ok(())
+    }
 }

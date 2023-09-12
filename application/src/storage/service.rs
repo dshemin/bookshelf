@@ -45,4 +45,15 @@ impl Get {
     }
 }
 
+#[derive(Debug, new)]
+pub struct Delete {
+    storages_repository: Repository,
+}
+
+impl Delete {
+    pub async fn delete(&self, id: storage::ID) -> anyhow::Result<()> {
+        self.storages_repository.delete(id).await
+    }
+}
+
 type Repository = Box<dyn storage::Repository + Send + std::marker::Sync>;

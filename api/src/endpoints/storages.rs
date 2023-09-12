@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use crate::AppState;
 use tracing::{debug, error};
 use serde::Deserialize;
@@ -54,7 +54,7 @@ pub struct Paging {
 
 #[get("/{id}")]
 pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
-    error!(req=tracing::field::debug(&path), "get storages");
+    error!(req=tracing::field::debug(&path), "get storage");
 
     let id = path.into_inner();
 
@@ -67,6 +67,23 @@ pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responde
         },
         Err(e) => {
             error!(err=e.to_string(), "failed to get storage");
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[delete("/{id}")]
+pub async fn delete(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
+    error!(req=tracing::field::debug(&path), "delete storage");
+
+    let id = path.into_inner();
+
+    let res = state.storage_services.delete.delete(id).await;
+
+    match res {
+        Ok(()) => HttpResponse::NoContent().finish(),
+        Err(e) => {
+            error!(err=e.to_string(), "failed to delete storage");
             HttpResponse::InternalServerError().finish()
         }
     }

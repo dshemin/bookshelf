@@ -18,6 +18,8 @@ pub trait Repository: Debug {
     async fn list(&self, from: Option<ID>) -> anyhow::Result<PaginatedData<Storage>>;
 
     async fn get(&self, id: ID) -> anyhow::Result<Option<Storage>>;
+
+    async fn delete(&self, id: ID) -> anyhow::Result<()>;
 }
 
 pub struct InsertDTO {
