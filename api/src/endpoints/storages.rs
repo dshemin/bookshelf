@@ -1,25 +1,25 @@
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use crate::AppState;
-use tracing::{debug, error};
-use serde::Deserialize;
+use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use application::storage::{self, Settings};
-
+use serde::Deserialize;
+use tracing::{debug, error};
 
 #[post("")]
 pub async fn create(state: AppState, req: web::Json<StorageCreate>) -> impl Responder {
-    debug!(req=tracing::field::debug(&req), "create storage");
+    debug!(req = tracing::field::debug(&req), "create storage");
 
-    let res = state.storage_services.create.create(
-        req.name.clone(),
-        req.settings.clone(),
-    ).await;
+    let res = state
+        .storage_services
+        .create
+        .create(req.name.clone(), req.settings.clone())
+        .await;
 
     match res {
-        Ok(_) => HttpResponse::Ok(),
+        Ok(_) => HttpResponse::Created(),
         Err(e) => {
-            error!(err=e.to_string(), "failed to create storage");
+            error!(err = e.to_string(), "failed to create storage");
             HttpResponse::InternalServerError()
-        },
+        }
     }
 }
 
@@ -31,17 +31,16 @@ pub struct StorageCreate {
 
 #[get("")]
 pub async fn list(state: AppState, query: web::Query<Paging>) -> impl Responder {
-    error!(req=tracing::field::debug(&query), "list storages");
+    error!(req = tracing::field::debug(&query), "list storages");
 
     let cursor = query.cursor.clone();
 
     let res = state.storage_services.list.list(cursor).await;
 
     match res {
-        Ok(v) =>
-            HttpResponse::Ok().json(v),
+        Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => {
-            error!(err=e.to_string(), "failed to list storages");
+            error!(err = e.to_string(), "failed to list storages");
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -54,7 +53,7 @@ pub struct Paging {
 
 #[get("/{id}")]
 pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
-    error!(req=tracing::field::debug(&path), "get storage");
+    error!(req = tracing::field::debug(&path), "get storage");
 
     let id = path.into_inner();
 
@@ -66,7 +65,36 @@ pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responde
             None => HttpResponse::NotFound().finish(),
         },
         Err(e) => {
-            error!(err=e.to_string(), "failed to get storage");
+            error!(err = e.to_string(), "failed to get storage");
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[put("/{id}")]
+pub async fn update(
+    state: AppState,
+    path: web::Path<storage::ID>,
+    req: web::Json<StorageCreate>,
+) -> impl Responder {
+    debug!(
+        req = tracing::field::debug(&req),
+        path = tracing::field::debug(&path),
+        "update storage"
+    );
+
+    let id = path.into_inner();
+
+    let res = state
+        .storage_services
+        .update
+        .update(id, req.name.clone(), req.settings.clone())
+        .await;
+
+    match res {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => {
+            error!(err = e.to_string(), "failed to update storage");
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -74,7 +102,7 @@ pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responde
 
 #[delete("/{id}")]
 pub async fn delete(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
-    error!(req=tracing::field::debug(&path), "delete storage");
+    error!(req = tracing::field::debug(&path), "delete storage");
 
     let id = path.into_inner();
 
@@ -83,7 +111,7 @@ pub async fn delete(state: AppState, path: web::Path<storage::ID>) -> impl Respo
     match res {
         Ok(()) => HttpResponse::NoContent().finish(),
         Err(e) => {
-            error!(err=e.to_string(), "failed to delete storage");
+            error!(err = e.to_string(), "failed to delete storage");
             HttpResponse::InternalServerError().finish()
         }
     }

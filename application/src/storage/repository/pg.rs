@@ -1,9 +1,9 @@
-use async_trait::async_trait;
-use sqlx::{QueryBuilder, types, query, Row};
-use sqlx::postgres::{PgPool, PgRow};
-use crate::storage::{self, Storage, Settings};
+use crate::storage::{self, Settings, Storage};
 use crate::{PaginatedData, LIMIT};
+use async_trait::async_trait;
 use futures::{future, TryStreamExt};
+use sqlx::postgres::{PgPool, PgRow};
+use sqlx::{query, types, QueryBuilder, Row};
 
 #[derive(Clone, Debug)]
 pub struct Repository {
@@ -12,9 +12,7 @@ pub struct Repository {
 
 impl Repository {
     pub fn new(pool: PgPool) -> Self {
-        Self {
-            pool,
-        }
+        Self { pool }
     }
 }
 
@@ -37,7 +35,8 @@ impl storage::Repository for Repository {
             .bind(dto.id)
             .bind(&dto.name)
             .bind(types::Json(&dto.settings))
-            .execute(&self.pool).await?;
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }
@@ -82,16 +81,49 @@ impl storage::Repository for Repository {
     async fn get(&self, id: storage::ID) -> anyhow::Result<Option<Storage>> {
         let row = query(r#"SELECT * FROM "storages" WHERE ID = $1"#)
             .bind(id)
-            .fetch_optional(&self.pool).await?;
+            .fetch_optional(&self.pool)
+            .await?;
 
         let row = row.map(Self::hydrate);
         Ok(row)
     }
 
+    async fn update(
+        &self,
+        id: storage::ID,
+        dto: &storage::UpdateDTO,
+    ) -> anyhow::Result<Option<Storage>> {
+        let row = query(
+            r#"
+            UPDATE "storages"
+            SET
+                name = $1,
+                settings = $2
+            WHERE ID = $3
+            RETURNING
+                id,
+                name,
+                settings
+        "#,
+        )
+        .bind(&dto.name)
+        .bind(types::Json(&dto.settings))
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        if row.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(Self::hydrate(row)))
+    }
+
     async fn delete(&self, id: storage::ID) -> anyhow::Result<()> {
         query(r#"DELETE FROM "storages" WHERE ID = $1"#)
             .bind(id)
-            .execute(&self.pool).await?;
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }

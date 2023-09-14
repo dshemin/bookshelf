@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
-use super::engine::Engine;
 use super::engine::fs::Engine as FSEngine;
+use super::engine::Engine;
 
 /// Storage unique identifier.
 pub type ID = Uuid;
@@ -105,7 +105,7 @@ pub enum Settings {
     FS {
         /// Path to the directory where all uploaded books will be stored.
         base_path: String,
-    }
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

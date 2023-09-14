@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use thiserror::Error;
+use tokio::fs::{remove_file, try_exists, File};
 use tokio::io::{self, AsyncRead};
-use tokio::fs::{File, remove_file, try_exists};
 
 /// Represents file system engine.
 ///
@@ -11,7 +11,7 @@ use tokio::fs::{File, remove_file, try_exists};
 /// It not optimal but deadly simple and will be more then enough for small
 /// amount of books.
 #[derive(Debug)]
-pub struct Engine{
+pub struct Engine {
     /// Base directory where all files will be placed.
     base_path: PathBuf,
 }
@@ -24,16 +24,14 @@ impl Engine {
     /// Will return an error if provided base path pointed on file not a directory.
     /// Or can't create the base directory.
     pub fn new<T>(base_path: T) -> Result<Self, FSNewError>
-        where
-            T: Into<PathBuf>
+    where
+        T: Into<PathBuf>,
     {
         let path = base_path.into();
 
         Self::make_base_dir(&path)?;
 
-        Ok(Self {
-            base_path: path,
-        })
+        Ok(Self { base_path: path })
     }
 
     /// Make base directory.
@@ -58,7 +56,7 @@ impl Engine {
     /// the file.
     pub async fn put<R>(&self, name: &str, source: &mut R) -> Result<PathBuf, anyhow::Error>
     where
-        R: AsyncRead + Unpin + Send
+        R: AsyncRead + Unpin + Send,
     {
         let path = {
             let mut p = self.base_path.clone();
@@ -103,7 +101,7 @@ mod tests {
 
     use scopeguard::defer;
 
-    mod engine{
+    mod engine {
         use std::pin::Pin;
         use std::task::{Context, Poll};
 
@@ -203,7 +201,10 @@ mod tests {
 
                 assert!(&path.exists());
 
-                engine.delete(String::from(path.to_string_lossy())).await.unwrap();
+                engine
+                    .delete(String::from(path.to_string_lossy()))
+                    .await
+                    .unwrap();
 
                 assert!(!&path.exists());
             }
@@ -222,7 +223,10 @@ mod tests {
 
                 assert!(!&path.exists());
 
-                engine.delete(String::from(path.to_string_lossy())).await.unwrap();
+                engine
+                    .delete(String::from(path.to_string_lossy()))
+                    .await
+                    .unwrap();
 
                 assert!(!&path.exists());
             }
@@ -257,9 +261,7 @@ mod tests {
         }
 
         fn get_temp_path(name: &str) -> PathBuf {
-            PathBuf::new()
-                .join(std::env::temp_dir())
-                .join(name)
+            PathBuf::new().join(std::env::temp_dir()).join(name)
         }
 
         fn safe_remove(p: &PathBuf) -> Result<(), std::io::Error> {

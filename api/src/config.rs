@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use dotenv::dotenv;
 use serde::Deserialize;
-use serde_with::{with_prefix, serde_as, DisplayFromStr};
+use serde_with::{serde_as, with_prefix, DisplayFromStr};
 
 with_prefix!(http_config "http_");
 with_prefix!(pg_config "pg_");
