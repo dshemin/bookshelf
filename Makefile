@@ -12,11 +12,19 @@ fmt:
 	rustfmt $(RUSTFMT_FLAGS) --emit files $(RUSTFMT_TARGETS)
 
 .PHONY: lint
-lint: lint/rustfmt
+lint: lint/rustfmt lint/clippy lint/check
 
 .PHONY: lint/rustfmt
 lint/rustfmt:
 	rustfmt $(RUSTFMT_FLAGS) --check --files-with-diff $(RUSTFMT_TARGETS)
+
+.PHONY: lint/clippy
+lint/clippy:
+	cargo clippy
+
+.PHONY: lint/check
+lint/check:
+	cargo check
 
 .PHONY: migrate
 migrate:
