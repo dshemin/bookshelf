@@ -4,8 +4,8 @@ mod entity;
 pub mod repository;
 pub mod service;
 
-use std::fmt::Debug;
 pub use entity::*;
+use std::fmt::Debug;
 
 use async_trait::async_trait;
 
