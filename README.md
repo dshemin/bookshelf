@@ -26,4 +26,6 @@ Tools
 You should have next tools installed:
 - cargo
 - cargo-watch
+- clippy
+- sqlfluff
 - sqlx cli
