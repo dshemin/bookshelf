@@ -14,6 +14,7 @@ pub struct Create {
 }
 
 impl Create {
+    /// Create new storage.
     pub async fn create(&self, name: String, settings: storage::Settings) -> anyhow::Result<()> {
         let dto = storage::InsertDTO {
             id: storage::ID::new_v4(),
@@ -24,12 +25,16 @@ impl Create {
     }
 }
 
+/// List service.
+///
+/// Lists storages.
 #[derive(Debug, new)]
 pub struct List {
     storages_repository: Repository,
 }
 
 impl List {
+    /// List storages.
     pub async fn list(&self, cursor: Option<Cursor>) -> anyhow::Result<PaginatedData<Storage>> {
         self.storages_repository
             .list(cursor.and_then(|x| x.last_id))
@@ -37,23 +42,31 @@ impl List {
     }
 }
 
+/// Get service.
+///
+/// Get single storage.
 #[derive(Debug, new)]
 pub struct Get {
     storages_repository: Repository,
 }
 
 impl Get {
+    /// Get storage.
     pub async fn get(&self, id: storage::ID) -> anyhow::Result<Option<Storage>> {
         self.storages_repository.get(id).await
     }
 }
 
+/// Update service.
+///
+/// Updates single storage.
 #[derive(Debug, new)]
 pub struct Update {
     storages_repository: Repository,
 }
 
 impl Update {
+    /// Update storage.
     pub async fn update(
         &self,
         id: storage::ID,
@@ -81,12 +94,16 @@ pub enum UpdateError {
     NotFound(),
 }
 
+/// Delete service.
+///
+/// Deletes single storage.
 #[derive(Debug, new)]
 pub struct Delete {
     storages_repository: Repository,
 }
 
 impl Delete {
+    /// Delete storage.
     pub async fn delete(&self, id: storage::ID) -> anyhow::Result<()> {
         self.storages_repository.delete(id).await
     }

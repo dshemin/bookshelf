@@ -5,18 +5,21 @@ use futures::{future, TryStreamExt};
 use sqlx::postgres::{PgPool, PgRow};
 use sqlx::{query, types, QueryBuilder, Row};
 
+/// Implementation of storage's repository for PostgreSQL.
 #[derive(Clone, Debug)]
 pub struct Repository {
     pool: PgPool,
 }
 
 impl Repository {
+    /// Create new PostgreSQL storage's repository.
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
 
 impl Repository {
+    /// Transform PostgreSQL's row to storage entity.
     fn hydrate(row: PgRow) -> Storage {
         let settings: types::Json<Settings> = row.get("settings");
 

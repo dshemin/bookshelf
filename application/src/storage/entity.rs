@@ -46,25 +46,11 @@ impl Storage {
     }
 
     /// Returns an unique identificator of this storage.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use application::storage::{Storage, Settings};
-    //
-    /// let settings = Settings::FS{
-    ///     base_path: "/tmp/foo".to_owned(),
-    /// };
-    ///
-    /// let engine = Storage::new("foo", settings);
-    ///
-    /// assert_eq!("foo", engine.name());
-    /// ```
     pub fn id(&self) -> &ID {
         &self.id
     }
 
-    /// Returns an unique identificator of this storage.
+    /// Returns a name of this storage.
     ///
     /// # Examples
     ///
@@ -108,10 +94,9 @@ pub enum Settings {
     },
 }
 
+/// The path to file on specific storage.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum Path {
     FS(PathBuf),
 }
-
-pub type PutResult = Result<Path, anyhow::Error>;
