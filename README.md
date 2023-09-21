@@ -16,7 +16,13 @@ Process
 
 Run `docker compose up` for setupping all required services.
 
-From scratch you will be able to login as ordinal user with credentials:
+From scratch you will be able to login:
+
+*Admin*
+Email: admin@example.com
+Password: 123456
+
+*Member*
 Email: test@example.com
 Password: 123456
 

@@ -9,6 +9,7 @@ import { User } from 'oidc-client-ts';
 const oidcConfig = {
   authority: process.env.REACT_APP_BS_UI_OIDC_AUTHORITY!,
   client_id: process.env.REACT_APP_BS_UI_OIDC_CLIENT_ID!,
+  client_secret: process.env.REACT_APP_BS_UI_OIDC_CLIENT_SECRET!,
   redirect_uri: process.env.REACT_APP_BS_UI_OIDC_REDIRECT_URI!,
   onSigninCallback: (_user: User | void): void => {
     window.history.replaceState(
@@ -18,6 +19,8 @@ const oidcConfig = {
     )
   }
 };
+
+console.log(oidcConfig)
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

@@ -4,7 +4,7 @@ mod telemetry;
 mod version;
 
 use actix_web::{web, App, HttpServer};
-use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth};
+use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth, Role};
 use application::storage::{repository as storage_repository, service as storage_services};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::sync::Arc;
@@ -112,13 +112,19 @@ fn configure_api(enable_auth: bool, key: DecodingKey) -> Box<dyn FnOnce(&mut web
         let default_headers =
             actix_web::middleware::DefaultHeaders::new().add(("Content-Type", "application/json"));
 
-        let keycloak_auth = KeycloakAuth::default_with_pk(key);
+        let keycloak_auth_admin = {
+            let mut auth = KeycloakAuth::default_with_pk(key);
+            auth.required_roles = vec![Role::Realm {
+                role: "Realm admin".to_owned(),
+            }];
+            auth
+        };
 
         let api = web::scope("/api")
             .wrap(default_headers)
             .wrap(actix_web::middleware::Condition::new(
                 enable_auth,
-                keycloak_auth,
+                keycloak_auth_admin,
             ))
             .service(setup_storages_endpoints());
 
