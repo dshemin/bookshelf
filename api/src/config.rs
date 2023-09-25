@@ -4,15 +4,22 @@ use serde::Deserialize;
 use serde_with::{serde_as, with_prefix, DisplayFromStr};
 
 with_prefix!(http_config "http_");
+with_prefix!(cors_config "cors_");
 with_prefix!(pg_config "pg_");
 
 #[derive(Deserialize, Debug, Default)]
 pub struct Config {
     #[serde(default = "default_enable_auth")]
     pub enable_auth: bool,
+
     #[serde(flatten, with = "http_config")]
     pub http: HTTPConfig,
+
+    #[serde(flatten, with = "cors_config")]
+    pub cors: CORSConfig,
+
     pub jwt_pub_key: String,
+
     #[serde(flatten, with = "pg_config")]
     pub pg: PGConfig,
 }
@@ -37,6 +44,17 @@ fn default_host() -> String {
 
 fn default_port() -> u16 {
     80
+}
+
+#[serde_as]
+#[derive(Deserialize, Debug, Default)]
+pub struct CORSConfig {
+    #[serde(default = "default_allowed_origin")]
+   pub  allowed_origin: String,
+}
+
+fn default_allowed_origin() -> String {
+    "*".to_string()
 }
 
 #[derive(Deserialize, Debug, Default)]

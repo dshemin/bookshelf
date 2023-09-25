@@ -3,7 +3,8 @@ mod endpoints;
 mod telemetry;
 mod version;
 
-use actix_web::{web, App, HttpServer};
+use actix_cors::Cors;
+use actix_web::{http::header, web, App, HttpServer};
 use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth, Role};
 use application::storage::{repository as storage_repository, service as storage_services};
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -31,6 +32,7 @@ async fn main() -> std::io::Result<()> {
         cfg.http.port,
         cfg.jwt_pub_key,
         cfg.enable_auth,
+        cfg.cors.allowed_origin,
         state,
     )
     .await
@@ -85,6 +87,7 @@ async fn run_http_server(
     port: u16,
     jwt_pub_key: String,
     enable_auth: bool,
+    allowed_origin: String,
     state: AppStateInner,
 ) -> std::io::Result<()> {
     let key = Box::new(DecodingKey::from_rsa_pem(jwt_pub_key.as_bytes()).map_err(to_std_io_err)?);
@@ -95,7 +98,7 @@ async fn run_http_server(
         App::new()
             .app_data(state.clone())
             .wrap(TracingLogger::default())
-            .configure(configure_api(enable_auth, *(key.clone())))
+            .configure(configure_api(enable_auth, *(key.clone()), allowed_origin.clone()))
             .service(endpoints::telemetry::healthz)
     })
     .bind((host, port))?
@@ -107,7 +110,7 @@ fn to_std_io_err<E: ToString>(e: E) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
 }
 
-fn configure_api(enable_auth: bool, key: DecodingKey) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
+fn configure_api(enable_auth: bool, key: DecodingKey, allowed_origin: String) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
     Box::new(move |cfg: &mut web::ServiceConfig| {
         let default_headers =
             actix_web::middleware::DefaultHeaders::new().add(("Content-Type", "application/json"));
@@ -120,8 +123,24 @@ fn configure_api(enable_auth: bool, key: DecodingKey) -> Box<dyn FnOnce(&mut web
             auth
         };
 
+        let mut cors = Cors::default()
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+            .allowed_headers(vec![
+                header::AUTHORIZATION,
+                header::ACCEPT,
+                header::CONTENT_TYPE,
+            ])
+            .supports_credentials();
+
+        if allowed_origin == "*" {
+            cors = cors.allow_any_origin();
+        } else {
+            cors = cors.allowed_origin(&allowed_origin);
+        }
+
         let api = web::scope("/api")
             .wrap(default_headers)
+            .wrap(cors)
             .wrap(actix_web::middleware::Condition::new(
                 enable_auth,
                 keycloak_auth_admin,
