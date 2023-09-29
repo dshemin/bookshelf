@@ -33,3 +33,8 @@ lint/sql:
 .PHONY: migrate
 migrate:
 	sqlx migrate run  --database-url ${BS_API_PG_CONN_URI}
+
+.PHONY: keycloak/sync-realm
+keycloak/sync-realm:
+	docker compose exec keycloak /opt/keycloak/bin/kc.sh export --realm test --file /tmp/realm.json
+	docker compose cp keycloak:/tmp/realm.json development/test_realm.json
