@@ -37,6 +37,6 @@ jobs:
           **/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/yarn-lock.json') }}
     - name: Install
-      run: yarn Install
+      run: yarn install
     - name: Lint
       run: yarn lint
