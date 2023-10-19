@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: make devdeps
     - name: Lint
       run: make lint
     - name: Run tests

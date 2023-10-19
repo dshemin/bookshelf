@@ -30,6 +30,10 @@ lint/check:
 lint/sql:
 	sqlfluff lint --dialect postgres migrations
 
+.PHONY:devdeps
+devdeps:
+	pip3 install -r requirements.txt
+
 .PHONY: migrate
 migrate:
 	sqlx migrate run  --database-url ${BS_API_PG_CONN_URI}
