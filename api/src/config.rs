@@ -50,7 +50,7 @@ fn default_port() -> u16 {
 #[derive(Deserialize, Debug, Default)]
 pub struct CORSConfig {
     #[serde(default = "default_allowed_origin")]
-   pub  allowed_origin: String,
+    pub allowed_origin: String,
 }
 
 fn default_allowed_origin() -> String {

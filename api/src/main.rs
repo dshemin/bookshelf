@@ -98,7 +98,11 @@ async fn run_http_server(
         App::new()
             .app_data(state.clone())
             .wrap(TracingLogger::default())
-            .configure(configure_api(enable_auth, *(key.clone()), allowed_origin.clone()))
+            .configure(configure_api(
+                enable_auth,
+                *(key.clone()),
+                allowed_origin.clone(),
+            ))
             .service(endpoints::telemetry::healthz)
     })
     .bind((host, port))?
@@ -110,7 +114,11 @@ fn to_std_io_err<E: ToString>(e: E) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
 }
 
-fn configure_api(enable_auth: bool, key: DecodingKey, allowed_origin: String) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
+fn configure_api(
+    enable_auth: bool,
+    key: DecodingKey,
+    allowed_origin: String,
+) -> Box<dyn FnOnce(&mut web::ServiceConfig)> {
     Box::new(move |cfg: &mut web::ServiceConfig| {
         let default_headers =
             actix_web::middleware::DefaultHeaders::new().add(("Content-Type", "application/json"));
