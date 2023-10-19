@@ -38,19 +38,19 @@ const App: React.FC = () => {
     const menuItems: MenuItems = useMemo(() => [
         {
             key: "home",
-            label:
-        <Link to="/">
-            <HomeOutlined />
-        </Link>
-            ,
+            label: (
+                <Link to="/">
+                    <HomeOutlined />
+                </Link>
+            ),
         },
         {
             key: "storages",
-            label:
-        <Link to="/storages">
-            <DatabaseOutlined />
-        </Link>
-            ,
+            label: (
+                <Link to="/storages">
+                    <DatabaseOutlined />
+                </Link>
+            ),
         },
     ], []);
 
