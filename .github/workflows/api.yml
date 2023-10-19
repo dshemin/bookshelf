@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "master" ]
     paths-ignore:
+      - ".github/workflows/ui.yml"
       - "development"
       - "migrations"
       - "ui/**"
@@ -12,6 +13,14 @@ on:
       - "README.md"
   pull_request:
     branches: [ "master" ]
+    paths-ignore:
+      - ".github/workflows/ui.yml"
+      - "development"
+      - "migrations"
+      - "ui/**"
+      - ".gitignore"
+      - "docker-compose.yml"
+      - "README.md"
 
 env:
   CARGO_TERM_COLOR: always
