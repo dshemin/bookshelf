@@ -1,5 +1,4 @@
-import "app/index.css";
-import "normalize.css";
+import "./index.css";
 
 import { App as AntdApp, Flex, Layout, Menu, MenuProps } from "antd";
 import { CSSProperties, Key, useCallback, useMemo, useState } from "react";
@@ -7,7 +6,7 @@ import { DatabaseOutlined, HomeOutlined } from "@ant-design/icons";
 import { ArrElement } from "shared/types";
 import { Link } from "react-router-dom";
 import { Routing } from "pages";
-import withProviders from "app/providers";
+import withProviders from "./providers";
 
 const { Header, Content } = Layout;
 
