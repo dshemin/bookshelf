@@ -1,8 +1,8 @@
+import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 import ruTrans from "./locales/ru.json";
-import i18next from "i18next";
 
-export const setupTranslation = (env: string = "development"): void => {
+export const setupTranslation = (env = "development"): void => {
     i18next
         .use(initReactI18next)
         .init({
@@ -10,7 +10,7 @@ export const setupTranslation = (env: string = "development"): void => {
             fallbackLng: "ru",
             debug: env !== "production",
             react: {
-                useSuspense: true
+                useSuspense: true,
             },
             interpolation: {
                 escapeValue: false,

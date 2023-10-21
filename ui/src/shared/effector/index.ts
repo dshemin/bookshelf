@@ -1,4 +1,4 @@
-export const setupEffector = async (env: string): Promise<void> => {
+export const setupEffector = async(env: string): Promise<void> => {
     if (env === "production") {
         return;
     }
@@ -8,4 +8,4 @@ export const setupEffector = async (env: string): Promise<void> => {
     module.attachLogger({
         name: "bookshelf",
     });
-}
+};

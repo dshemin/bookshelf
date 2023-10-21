@@ -6,8 +6,8 @@ import { DatabaseOutlined, HomeOutlined } from "@ant-design/icons";
 import { ArrElement } from "shared/types";
 import { Link } from "react-router-dom";
 import { Routing } from "pages";
-import withProviders from "./providers";
 import { Trans } from "react-i18next";
+import withProviders from "./providers";
 
 const { Header, Content } = Layout;
 
