@@ -28,6 +28,10 @@ const contentStyle: CSSProperties = {
     padding: "10px",
 };
 
+const marginRight: CSSProperties = {
+    marginRight: "10px",
+};
+
 type MenuItems = MenuProps["items"];
 type MenuItem = ArrElement<MenuItems>;
 type MenuOnClick = MenuProps["onClick"];
@@ -40,7 +44,7 @@ const App: React.FC = () => {
             key: "home",
             label: (
                 <Link to="/">
-                    <HomeOutlined />
+                    <HomeOutlined style={marginRight} />
                     <Trans i18nKey="nav-bar.home" />
                 </Link>
             ),
@@ -49,7 +53,7 @@ const App: React.FC = () => {
             key: "storages",
             label: (
                 <Link to="/storages">
-                    <DatabaseOutlined />
+                    <DatabaseOutlined style={marginRight} />
                     <Trans i18nKey="nav-bar.storages" />
                 </Link>
             ),
