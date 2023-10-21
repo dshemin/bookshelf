@@ -7,6 +7,7 @@ import { ArrElement } from "shared/types";
 import { Link } from "react-router-dom";
 import { Routing } from "pages";
 import withProviders from "./providers";
+import { Trans } from "react-i18next";
 
 const { Header, Content } = Layout;
 
@@ -40,6 +41,7 @@ const App: React.FC = () => {
             label: (
                 <Link to="/">
                     <HomeOutlined />
+                    <Trans i18nKey="nav-bar.home" />
                 </Link>
             ),
         },
@@ -48,6 +50,7 @@ const App: React.FC = () => {
             label: (
                 <Link to="/storages">
                     <DatabaseOutlined />
+                    <Trans i18nKey="nav-bar.storages" />
                 </Link>
             ),
         },

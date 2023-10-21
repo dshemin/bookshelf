@@ -1,23 +1,20 @@
 import App from "app";
 import React from "react";
-import ReactDOM from "react-dom/client";
-import { attachLogger } from "effector-logger";
-import { mockServer } from "shared/mock";
+import { createRoot } from "react-dom/client";
+import { mockServer as setupMockServer } from "shared/mock";
+import { setupTranslation } from "shared/i18n";
+import config from "shared/config";
+import { setupEffector } from "shared/effector";
 
-if (process.env.NODE_ENV === "development") {
-    mockServer({ environment: "development" });
-    attachLogger({
-        name: "bookshelf",
-    });
-}
+setupTranslation(config.env);
+setupMockServer(config.env);
+setupEffector(config.env)
 
-const root = document.getElementById("root");
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(document.getElementById("root")!);
 
-ReactDOM
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    .createRoot(root!)
-    .render(
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>,
-    );
+root.render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>,
+);

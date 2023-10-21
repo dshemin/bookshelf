@@ -2,7 +2,7 @@ import { AppServer, endpoints, models, seeds, serializers } from "./types";
 import config from "shared/config";
 import { createServer } from "miragejs";
 
-export const mockServer = ({ environment = "test" }): AppServer => {
+export const mockServer = (environment = "test"): AppServer => {
     return createServer({
         environment,
 

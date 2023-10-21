@@ -1,4 +1,5 @@
 export default {
+    env: process.env.NODE_ENV ?? "development",
     auth: {
         authority: import.meta.env.BS_AUTH_OIDC_AUTHORITY ?? "",
         clientID: import.meta.env.BS_AUTH_OIDC_CLIENT_ID ?? "",
