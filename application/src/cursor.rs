@@ -103,9 +103,7 @@ mod test {
 
         #[test]
         fn serialize_deserialize_without_value() {
-            let expected = Cursor {
-                last_id: None,
-            };
+            let expected = Cursor { last_id: None };
 
             let s = serde_json::to_string(&expected).unwrap();
             let actual: Cursor = serde_json::from_str(&s).unwrap();

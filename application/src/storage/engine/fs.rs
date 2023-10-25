@@ -199,10 +199,7 @@ mod tests {
 
                 assert!(&path.exists());
 
-                engine
-                    .delete(&path)
-                    .await
-                    .unwrap();
+                engine.delete(&path).await.unwrap();
 
                 assert!(!&path.exists());
             }
@@ -221,10 +218,7 @@ mod tests {
 
                 assert!(!&path.exists());
 
-                engine
-                    .delete(&path)
-                    .await
-                    .unwrap();
+                engine.delete(&path).await.unwrap();
 
                 assert!(!&path.exists());
             }
