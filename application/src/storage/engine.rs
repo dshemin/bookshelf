@@ -24,9 +24,9 @@ impl Engine {
     }
 
     /// Deletes a file under the path.
-    pub async fn delete(&self, path: String) -> Result<(), anyhow::Error> {
-        match self {
-            Self::FS(engine) => engine.delete(path).await,
+    pub async fn delete(&self, path: Path) -> Result<(), anyhow::Error> {
+        match (self, path) {
+            (Self::FS(engine), Path::FS(path)) => engine.delete(&path).await,
         }
     }
 }

@@ -21,8 +21,8 @@ impl Engine {
     ///
     /// # Errors
     ///
-    /// Will return an error if provided base path pointed on file not a directory.
-    /// Or can't create the base directory.
+    /// Will return an error if provided base path pointed to a file but not a
+    /// directory, or can't create the base directory.
     pub fn new<T>(base_path: T) -> Result<Self, FSNewError>
     where
         T: Into<PathBuf>,
@@ -36,14 +36,14 @@ impl Engine {
 
     /// Make base directory.
     fn make_base_dir(path: &PathBuf) -> Result<(), FSNewError> {
-        if path.exists() {
-            if !path.is_dir() {
-                return Err(FSNewError::BasePathNotDir);
-            }
+        if !path.exists() {
+            std::fs::create_dir_all(path)?;
             return Ok(());
         }
 
-        std::fs::create_dir_all(path)?;
+        if !path.is_dir() {
+            return Err(FSNewError::BasePathNotDir);
+        }
 
         Ok(())
     }
@@ -76,11 +76,9 @@ impl Engine {
     /// # Errors
     ///
     /// Will return an error if failed to delete required file.
-    pub async fn delete(&self, path: String) -> Result<(), anyhow::Error> {
-        let path: PathBuf = path.into();
-
-        if try_exists(&path).await? {
-            remove_file(&path).await?;
+    pub async fn delete(&self, path: &PathBuf) -> Result<(), anyhow::Error> {
+        if try_exists(path).await? {
+            remove_file(path).await?;
         }
         Ok(())
     }
@@ -202,7 +200,7 @@ mod tests {
                 assert!(&path.exists());
 
                 engine
-                    .delete(String::from(path.to_string_lossy()))
+                    .delete(&path)
                     .await
                     .unwrap();
 
@@ -224,7 +222,7 @@ mod tests {
                 assert!(!&path.exists());
 
                 engine
-                    .delete(String::from(path.to_string_lossy()))
+                    .delete(&path)
                     .await
                     .unwrap();
 

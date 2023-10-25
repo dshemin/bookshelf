@@ -90,9 +90,21 @@ mod test {
         use super::*;
 
         #[test]
-        fn serialize_deserialize() {
+        fn serialize_deserialize_with_value() {
             let expected = Cursor {
                 last_id: Some(Uuid::new_v4()),
+            };
+
+            let s = serde_json::to_string(&expected).unwrap();
+            let actual: Cursor = serde_json::from_str(&s).unwrap();
+
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn serialize_deserialize_without_value() {
+            let expected = Cursor {
+                last_id: None,
             };
 
             let s = serde_json::to_string(&expected).unwrap();

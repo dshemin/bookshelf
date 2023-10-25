@@ -13,6 +13,7 @@ pub(crate) const LIMIT: usize = 25;
 pub struct PaginatedData<T> {
     /// A small set of requested data.
     data: Vec<T>,
+
     /// Cursor for fetching next page.
     /// Will be None, if there is no any page left.
     cursor: Option<Cursor>,

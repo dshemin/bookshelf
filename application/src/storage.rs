@@ -33,13 +33,21 @@ pub trait Repository: Debug {
 
 /// Represents necessary information for creating new storage.
 pub struct InsertDTO {
+    /// Identificator for the new storage.
     pub id: ID,
+
+    /// Name for the new storage.
     pub name: String,
+
+    /// Settings for the new storage.
     pub settings: Settings,
 }
 
 /// Represents necessary information for updating new storage.
 pub struct UpdateDTO {
+    /// New name for the updating storage.
     pub name: String,
+
+    /// New settings for the updating storage.
     pub settings: Settings,
 }
