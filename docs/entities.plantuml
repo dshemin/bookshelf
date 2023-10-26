@@ -1,0 +1,76 @@
+@startuml Entities relationship
+
+enum Settings {
+    FS (String)
+}
+
+enum StoragePath {
+    FS (String)
+}
+
+entity Storage {
+    * id : UUID
+    --
+    * name : String
+    * setting: Settings
+}
+note top
+    Some place where all books are stored.
+    Represent some physical storage like FS, S3, and etc.
+end note
+
+entity Tag {
+    * id : UUID
+    --
+    * name : String
+}
+note top
+    Allows to group books by some feature like: genre, author, and etc.
+end note
+
+entity Book {
+    * id : UUID
+    --
+    * storage_id : UUID <<FK>>
+    * path : StoragePath
+    * title : String
+}
+note top
+    The main entity.
+    Holds imformation about uploaded book.
+end note
+
+entity Bookmark {
+    * id : UUID
+    --
+    * book_id : UUID <<FK>>
+    * page : uint
+    * title : String
+    * note : String
+}
+note bottom
+    Allows to make fast navigation bettwen book's pages and make some note.
+end note
+
+entity Highlight {
+    * id : UUID
+    --
+    * book_id : UUID <<FK>>
+    * page : uint
+    * start : uint
+    * end : uint
+    * title : String
+    * note : String
+}
+note bottom
+    Allows to highlight some part of the text and search it quickly.
+end note
+
+Book }o--|| Storage
+Book }o--o{ Tag
+Book ||--o{ Bookmark
+Book ||--o{ Highlight
+Book -- StoragePath
+Storage -- Settings
+
+@enduml
