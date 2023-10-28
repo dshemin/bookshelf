@@ -5,7 +5,8 @@ export interface StorageRowProps {
   data: Storage
 }
 
-export const StorageRow: React.FC<StorageRowProps> = ({ data }) => <Row>
-    {data.name}
-</Row>;
-
+export const StorageRow: React.FC<StorageRowProps> = ({ data }) => (
+    <Row>
+        {data.name}
+    </Row>
+);

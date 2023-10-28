@@ -27,7 +27,6 @@ entity Tag {
 note top
     Allows to group books by some feature like: genre, author, and etc.
 end note
-
 entity Book {
     * id : UUID
     --

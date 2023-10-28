@@ -10,11 +10,13 @@ const StorageListPage: React.FC = () => (
     </Layout>
 );
 
-const Item: React.FC<{ storage: Storage }> = ({ storage }) => <Col>
-    <StorageRow
-        data={storage}
-    />
-</Col>;
+const Item: React.FC<{ storage: Storage }> = ({ storage }) => (
+    <Col>
+        <StorageRow
+            data={storage}
+        />
+    </Col>
+);
 
 const TasksList = list({
     view: Item,
