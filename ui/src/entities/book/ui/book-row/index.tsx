@@ -1,5 +1,5 @@
-import { Row } from "antd";
 import { Book } from "shared/api/book";
+import { Row } from "antd";
 
 export interface BookRowProps {
   data: Book

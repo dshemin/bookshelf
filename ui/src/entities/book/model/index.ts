@@ -1,6 +1,6 @@
 import { combine, createEffect, createStore } from "effector";
-import api from "shared/api";
 import type { Book } from "shared/api/book";
+import api from "shared/api";
 
 export const getBookListFx = createEffect((cursor?: string) => api.book.list(cursor));
 export const $getBookListFxLoading = getBookListFx.pending;

@@ -1,8 +1,8 @@
 import { AppServer } from "shared/mock/types";
+import { Book } from "shared/api/book";
 import { Model } from "miragejs";
 import { ModelDefinition } from "miragejs/-types";
 import { Serializer } from "shared/mock/utils";
-import { Book } from "shared/api/book";
 
 export const BookModel: ModelDefinition<Book> = Model.extend({});
 

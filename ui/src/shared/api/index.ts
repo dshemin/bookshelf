@@ -4,6 +4,7 @@ import config from "shared/config";
 
 class API {
     public storage: StorageAPI;
+
     public book: BookAPI;
 
     public constructor(baseURL: string) {

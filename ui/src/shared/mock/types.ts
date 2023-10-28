@@ -1,8 +1,8 @@
+import { BookModel, bookEndpoints, bookSeed, bookSerializer } from "./book";
 import { Registry, Server } from "miragejs";
 import { StorageModel, storageEndpoints, storageSeed, storageSerializer } from "./storage";
 import { AnyFactories } from "miragejs/-types";
 import Schema from "miragejs/orm/schema";
-import { BookModel, bookEndpoints, bookSeed, bookSerializer } from "./book";
 
 export const models = {
     storage: StorageModel,

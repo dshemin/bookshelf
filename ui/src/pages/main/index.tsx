@@ -1,9 +1,9 @@
-import { list, variant } from "@effector/reflect";
 import { Col, Empty, Layout, Spin } from "antd";
-import { combine } from "effector";
-import { bookModel } from "entities/book";
-import { BookRow } from "entities/book/ui/book-row";
+import { list, variant } from "@effector/reflect";
 import { Book } from "shared/api/book";
+import { BookRow } from "entities/book/ui/book-row";
+import { bookModel } from "entities/book";
+import { combine } from "effector";
 
 const MainPage: React.FC = () => (
     <Layout>
