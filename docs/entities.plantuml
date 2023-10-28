@@ -32,8 +32,8 @@ entity Book {
     * id : UUID
     --
     * storage_id : UUID <<FK>>
-    * path : StoragePath
     * title : String
+    * path : StoragePath
 }
 note top
     The main entity.
