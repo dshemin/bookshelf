@@ -9,7 +9,17 @@ const BOOKS = {
                 "tag2",
                 "tag3",
             ],
-            highlights: [],
+            highlights: [
+                {
+                    page: 1,
+                    lineStart: 1,
+                    lineEnd: 1,
+                    symbolStart: 10,
+                    symbolEnd: 20,
+                    title: "highlight1",
+                    note: "highlight1 note",
+                }
+            ],
             bookmarks: [],
         },
     ],

@@ -34,8 +34,10 @@ export interface Book {
 
 export interface Highlight {
     page: number,
-    start: number,
-    end: number,
+    lineStart: number,
+    lineEnd: number,
+    symbolStart: number,
+    symbolEnd: number,
     title: string,
     note: string,
 }

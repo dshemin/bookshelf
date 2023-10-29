@@ -14,7 +14,7 @@ interface ItemProps {
 }
 
 const Item: React.FC<ItemProps> = ({ isLoading }) => {
-    const {id} = useParams();
+    const { id } = useParams();
     const book = bookModel.useBook(id ?? "");
 
     useEffect(() => {
@@ -36,7 +36,7 @@ const Item: React.FC<ItemProps> = ({ isLoading }) => {
         <Layout>
             <Layout.Content>
                 <BookCard
-                    data={book}
+                    book={book}
                     isLoading={isLoading}
                 />
             </Layout.Content>

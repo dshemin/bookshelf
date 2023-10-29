@@ -1,7 +1,7 @@
 import { Col, Empty, Layout, Spin } from "antd";
 import { list, variant } from "@effector/reflect";
-import { Book } from "shared/api/book";
 import { BookRow } from "entities/book/ui/book-row";
+import { NormalizedBook } from "entities/book/model";
 import { bookModel } from "entities/book";
 import { combine } from "effector";
 
@@ -11,7 +11,7 @@ const MainPage: React.FC = () => (
     </Layout>
 );
 
-const Item: React.FC<{ book: Book }> = ({ book }) => (
+const Item: React.FC<{ book: NormalizedBook }> = ({ book }) => (
     <Col>
         <BookRow
             data={book}

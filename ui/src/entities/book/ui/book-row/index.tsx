@@ -1,9 +1,9 @@
-import { Book } from "shared/api/book";
 import { Link } from "react-router-dom";
+import { NormalizedBook } from "entities/book/model";
 import { Row } from "antd";
 
 export interface BookRowProps {
-    data: Book,
+    data: NormalizedBook,
 }
 
 export const BookRow: React.FC<BookRowProps> = ({ data }) => (
