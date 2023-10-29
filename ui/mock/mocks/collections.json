@@ -1,0 +1,10 @@
+[
+  {
+    "id": "base",
+    "routes": [
+      "get-storages:success",
+      "get-books:success",
+      "get-book:success"
+    ]
+  }
+]
