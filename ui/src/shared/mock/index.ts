@@ -20,6 +20,8 @@ export const setupMockServer = (environment = "test"): AppServer => {
             this.namespace = "api";
 
             endpoints.forEach(f => f(this));
+
+            this.passthrough("http://localhost:5173/sample.pdf");
         },
     });
 };

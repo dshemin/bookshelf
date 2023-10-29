@@ -19,7 +19,7 @@ export const bookSeed = (server: AppServer): void => {
     server.create("book", {
         id: crypto.randomUUID(),
         title: "Book1",
-        uri: "https://localhost:5173/sample.pdf",
+        uri: "http://localhost:5173/sample.pdf",
         tags: [
             "tag1",
             "tag2",
