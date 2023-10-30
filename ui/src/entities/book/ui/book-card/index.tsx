@@ -1,6 +1,6 @@
 import { Card, Pagination, PaginationProps } from "antd";
 import { Document, Page, PageProps, pdfjs } from "react-pdf";
-import { useCallback, useEffect, useState } from "react";
+import { EffectCallback, useCallback, useEffect, useState } from "react";
 import { NormalizedBook } from "entities/book/model";
 
 export interface BookCardProps {
@@ -33,23 +33,24 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
 
     useEffect(() => {
         const event = "click";
-        const handler = (ev: MouseEvent) => {
-            //@ts-ignore
+        const handler = (ev: MouseEvent): EffectCallbackReturn => {
+            //@ts-expect-error 'cause we didn't have enough types.
             if (!ev || !ev.target || ev.target.localName !== "mark") {
                 return;
             }
 
-            //@ts-ignore
+            //@ts-expect-error 'cause we didn't have enough types.
             const index = ev.target.dataset.index;
 
+            // eslint-disable-next-line no-alert
             window.alert(book?.highlights[page][index].title);
-        }
+        };
         document.addEventListener(event, handler);
 
         return () => {
             document.removeEventListener(event, handler);
         };
-    }, []);
+    }, [book?.highlights, page]);
 
     const textRenderer = useCallback(
         (textItem: TextItem) => {
@@ -58,8 +59,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
 
             book?.highlights[page]
                 .forEach(({ lineStart, lineEnd, symbolStart, symbolEnd }, hIndex) => {
-                    if ((lineStart < index) && (index > lineEnd)) {
-                        return
+                    if (lineStart < index && index > lineEnd) {
+                        return;
                     }
                     const before = str.substring(0, symbolStart);
                     const marked = str.substring(symbolStart, symbolEnd);
@@ -70,7 +71,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
 
             return str;
         },
-        [],
+        [book?.highlights, page],
     );
 
     if (!book || isLoading) {
@@ -92,7 +93,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
             <Document
                 file={book.uri}
                 onLoadSuccess={onDocumentLoaded}
-                onItemClick={(t) => console.log("item", t)}
             >
                 <Page
                     pageNumber={page}
@@ -105,3 +105,4 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
 };
 
 type TextItem = Parameters<NonNullable<PageProps["customTextRenderer"]>>[0];
+type EffectCallbackReturn = ReturnType<EffectCallback>;
