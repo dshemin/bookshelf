@@ -1,4 +1,8 @@
-import { Card, Pagination, PaginationProps } from "antd";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import "./styles.css";
+
+import { Card, Modal, Pagination, PaginationProps } from "antd";
 import { Document, Page, PageProps, pdfjs } from "react-pdf";
 import { EffectCallback, useCallback, useEffect, useState } from "react";
 import { NormalizedBook } from "entities/book/model";
@@ -16,20 +20,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
     const [page, setPage] = useState(1);
     const [numPages, setNumPages] = useState(0);
-
-    const onDocumentLoaded = useCallback(
-        (data: { numPages: number }) => {
-            setNumPages(data.numPages);
-        },
-        [setNumPages],
-    );
-
-    const onPageChange = useCallback(
-        (page: number) => {
-            setPage(page);
-        },
-        [setPage],
-    );
+    const [selectedHighlight, setSelectedHighlight] = useState(0);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const event = "click";
@@ -42,15 +34,20 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
             //@ts-expect-error 'cause we didn't have enough types.
             const index = ev.target.dataset.index;
 
-            // eslint-disable-next-line no-alert
-            window.alert(book?.highlights[page][index].title);
+            setSelectedHighlight(index);
+            setIsModalOpen(true);
         };
         document.addEventListener(event, handler);
 
         return () => {
             document.removeEventListener(event, handler);
         };
-    }, [book?.highlights, page]);
+    }, [
+        book?.highlights,
+        page,
+        setSelectedHighlight,
+        setIsModalOpen,
+    ]);
 
     const textRenderer = useCallback(
         (textItem: TextItem) => {
@@ -74,6 +71,27 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
         [book?.highlights, page],
     );
 
+    const onDocumentLoaded = useCallback(
+        (data: { numPages: number }) => {
+            setNumPages(data.numPages);
+        },
+        [setNumPages],
+    );
+
+    const onPageChange = useCallback(
+        (page: number) => {
+            setPage(page);
+        },
+        [setPage],
+    );
+
+    const handleModelClose = useCallback(
+        () => {
+            setIsModalOpen(false);
+        },
+        [setIsModalOpen],
+    );
+
     if (!book || isLoading) {
         return null;
     }
@@ -85,6 +103,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
         onChange: onPageChange,
     };
 
+    const highlight = book.highlights[page][selectedHighlight];
+
     return (
         <Card
             title={book.title}
@@ -93,6 +113,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
             <Document
                 file={book.uri}
                 onLoadSuccess={onDocumentLoaded}
+                className="pdf-document"
             >
                 <Page
                     pageNumber={page}
@@ -100,6 +121,15 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
                 />
             </Document>
             <Pagination {...paginationProps} />
+
+            <Modal
+                title={highlight.title}
+                open={isModalOpen}
+                onCancel={handleModelClose}
+                footer={null}
+            >
+                {highlight.note}
+            </Modal>
         </Card>
     );
 };
