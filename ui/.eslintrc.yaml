@@ -58,7 +58,10 @@ rules:
   "function-call-argument-newline": ["error", "consistent"]
   "function-paren-newline": ["error", "multiline-arguments"]
   "implicit-arrow-linebreak": "error"
-  "indent": ["error", 4]
+  "indent":
+    - "error"
+    - 4
+    - SwitchCase: 1
   "jsx-quotes": "error"
   "key-spacing": "error"
   "keyword-spacing": "error"

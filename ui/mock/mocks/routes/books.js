@@ -16,8 +16,16 @@ const BOOKS = {
                     lineEnd: 1,
                     symbolStart: 10,
                     symbolEnd: 20,
-                    title: "highlight1",
-                    note: "highlight1 note",
+                    title: "single line highlight",
+                    note: "single line highlight note",
+                },
+                {
+                    page: 1,
+                    lineStart: 2,
+                    lineEnd: 4,
+                    symbolStart: 5,
+                    symbolEnd: 14,
+                    title: "multiline highlight",
                 }
             ],
             bookmarks: [],

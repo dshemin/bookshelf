@@ -51,19 +51,20 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
 
     const textRenderer = useCallback(
         (textItem: TextItem) => {
-            const index = textItem.itemIndex;
+            const lineCurr = textItem.itemIndex;
             let str = textItem.str;
 
             book?.highlights[page]
-                .forEach(({ lineStart, lineEnd, symbolStart, symbolEnd }, hIndex) => {
-                    if (lineStart < index && index > lineEnd) {
-                        return;
-                    }
-                    const before = str.substring(0, symbolStart);
-                    const marked = str.substring(symbolStart, symbolEnd);
-                    const after = str.substring(symbolEnd);
-
-                    str = `${before}<mark data-index="${hIndex}">${marked}</mark>${after}`;
+                .forEach(({ lineStart, lineEnd, symbolStart, symbolEnd }, index) => {
+                    str = highlightText(
+                        str,
+                        index,
+                        lineCurr,
+                        lineStart,
+                        lineEnd,
+                        symbolStart,
+                        symbolEnd,
+                    );
                 });
 
             return str;
@@ -132,6 +133,98 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
             </Modal>
         </Card>
     );
+};
+
+const highlightText = (
+    str: string,
+    highlightIndex: number,
+    lineCurr: number,
+    lineStart: number,
+    lineEnd: number,
+    symbolStart: number,
+    symbolEnd: number,
+): string => {
+    // We should check that current line is inside highlight.
+    if (lineStart < lineCurr && lineCurr > lineEnd) {
+        return str;
+    }
+
+    let highlight: HighlightResult;
+
+    // Single line highlight.
+    if (lineStart === lineEnd) {
+        highlight = highlightSingleLine(str, symbolStart, symbolEnd);
+    } else {
+        // Multiline highlight.
+        highlight = highlightMultiLine(str, lineCurr, lineStart, lineEnd, symbolStart, symbolEnd);
+    }
+
+    const { prefix, marked, suffix } = highlight;
+
+    // Check if current highlight is multiline.
+    return `${prefix}<mark data-index="${highlightIndex}">${marked}</mark>${suffix}`;
+};
+
+interface HighlightResult {
+    prefix?: string,
+    marked?: string,
+    suffix?: string,
+}
+
+/*
+    highlightSingleLine
+    Simply mark text between symbolStart and symbolEnd.
+*/
+const highlightSingleLine = (
+    str: string,
+    symbolStart: number,
+    symbolEnd: number,
+): HighlightResult => ({
+    prefix: str.substring(0, symbolStart),
+    marked: str.substring(symbolStart, symbolEnd),
+    suffix: str.substring(symbolEnd),
+});
+
+/*
+    highlightMultiLine
+    Handles three different scenarios:
+
+    1. Current line is the first line of highlight;
+    2. Current line is inside of highlight;
+    3. Current line is the last line of highlights.
+*/
+const highlightMultiLine = (
+    str: string,
+    lineCurr: number,
+    lineStart: number,
+    lineEnd: number,
+    symbolStart: number,
+    symbolEnd: number,
+): HighlightResult => {
+    const res: HighlightResult = {};
+
+    switch (lineCurr) {
+        // First scenario.
+        // Mark whole text from the symbolStart to the end of the line.
+        case lineStart:
+            res.prefix = str.substring(0, symbolStart);
+            res.marked = str.substring(symbolStart);
+            break;
+
+        // Third scenario.
+        // Mark whole text from the beginning of the line to symbolEnd.
+        case lineEnd:
+            res.marked = str.substring(0, symbolEnd);
+            res.suffix = str.substring(symbolEnd);
+            break;
+
+        // Second scenario.
+        // Mark whole line.
+        default:
+            res.marked = str;
+    }
+
+    return res;
 };
 
 type TextItem = Parameters<NonNullable<PageProps["customTextRenderer"]>>[0];

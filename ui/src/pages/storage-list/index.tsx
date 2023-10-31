@@ -36,11 +36,11 @@ const Content = variant({
         },
         ({ isLoading, isEmpty }) => {
             switch (true) {
-            case isLoading:
-                return "loading";
+                case isLoading:
+                    return "loading";
 
-            case isEmpty:
-                return "empty";
+                case isEmpty:
+                    return "empty";
             }
 
             return "ready";
