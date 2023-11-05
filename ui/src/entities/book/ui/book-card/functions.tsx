@@ -1,9 +1,7 @@
-export interface HighlightResult {
-    prefix?: string,
-    marked?: string,
-    suffix?: string,
-}
-
+/**
+ * highlightText
+ * Highlights given text.
+ */
 export const highlightText = (
     str: string,
     highlightIndex: number,
@@ -34,10 +32,16 @@ export const highlightText = (
     return `${prefix}<mark data-index="${highlightIndex}">${marked}</mark>${suffix}`;
 };
 
-/*
-    highlightSingleLine
-    Simply mark text between symbolStart and symbolEnd.
-*/
+export interface HighlightResult {
+    prefix?: string,
+    marked?: string,
+    suffix?: string,
+}
+
+/**
+ * highlightSingleLine
+ * Simply mark text between symbolStart and symbolEnd.
+ */
 export const highlightSingleLine = (
     str: string,
     symbolStart: number,
@@ -46,36 +50,36 @@ export const highlightSingleLine = (
     if (str === "") {
         return {
             suffix: "",
-        }
+        };
     }
 
     if (symbolStart < 0 || symbolEnd < 0) {
         return {
             suffix: str,
-        }
+        };
     }
 
     if (symbolStart >= symbolEnd) {
         return {
             suffix: str,
-        }
+        };
     }
 
     return {
         prefix: str.substring(0, symbolStart),
         marked: str.substring(symbolStart, symbolEnd),
         suffix: str.substring(symbolEnd),
-    }
+    };
 };
 
-/*
-    highlightMultiLine
-    Handles three different scenarios:
-
-    1. Current line is the first line of highlight;
-    2. Current line is inside of highlight;
-    3. Current line is the last line of highlights.
-*/
+/**
+ * highlightMultiLine
+ *  Handles three different scenarios:
+ *
+ *  1. Current line is the first line of highlight;
+ *  2. Current line is inside of highlight;
+ *  3. Current line is the last line of highlights.
+ */
 export const highlightMultiLine = (
     str: string,
     lineCurr: number,

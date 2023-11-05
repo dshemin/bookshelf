@@ -6,7 +6,7 @@ import { Card, Modal, Pagination, PaginationProps } from "antd";
 import { Document, Page, PageProps, pdfjs } from "react-pdf";
 import { EffectCallback, useCallback, useEffect, useState } from "react";
 import { NormalizedBook } from "entities/book/model";
-import { HighlightResult, highlightMultiLine, highlightSingleLine } from "./functions";
+import { highlightText } from "./functions";
 
 export interface BookCardProps {
     book?: NormalizedBook,
@@ -134,36 +134,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
             </Modal>
         </Card>
     );
-};
-
-export const highlightText = (
-    str: string,
-    highlightIndex: number,
-    lineCurr: number,
-    lineStart: number,
-    lineEnd: number,
-    symbolStart: number,
-    symbolEnd: number,
-): string => {
-    // We should check that current line is inside highlight.
-    if (lineStart < lineCurr && lineCurr > lineEnd) {
-        return str;
-    }
-
-    let highlight: HighlightResult;
-
-    // Single line highlight.
-    if (lineStart === lineEnd) {
-        highlight = highlightSingleLine(str, symbolStart, symbolEnd);
-    } else {
-        // Multiline highlight.
-        highlight = highlightMultiLine(str, lineCurr, lineStart, lineEnd, symbolStart, symbolEnd);
-    }
-
-    const { prefix, marked, suffix } = highlight;
-
-    // Check if current highlight is multiline.
-    return `${prefix}<mark data-index="${highlightIndex}">${marked}</mark>${suffix}`;
 };
 
 type TextItem = Parameters<NonNullable<PageProps["customTextRenderer"]>>[0];
