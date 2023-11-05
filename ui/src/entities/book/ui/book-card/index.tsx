@@ -6,6 +6,7 @@ import { Card, Modal, Pagination, PaginationProps } from "antd";
 import { Document, Page, PageProps, pdfjs } from "react-pdf";
 import { EffectCallback, useCallback, useEffect, useState } from "react";
 import { NormalizedBook } from "entities/book/model";
+import { HighlightResult, highlightMultiLine, highlightSingleLine } from "./functions";
 
 export interface BookCardProps {
     book?: NormalizedBook,
@@ -135,7 +136,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isLoading }) => {
     );
 };
 
-const highlightText = (
+export const highlightText = (
     str: string,
     highlightIndex: number,
     lineCurr: number,
@@ -163,68 +164,6 @@ const highlightText = (
 
     // Check if current highlight is multiline.
     return `${prefix}<mark data-index="${highlightIndex}">${marked}</mark>${suffix}`;
-};
-
-interface HighlightResult {
-    prefix?: string,
-    marked?: string,
-    suffix?: string,
-}
-
-/*
-    highlightSingleLine
-    Simply mark text between symbolStart and symbolEnd.
-*/
-const highlightSingleLine = (
-    str: string,
-    symbolStart: number,
-    symbolEnd: number,
-): HighlightResult => ({
-    prefix: str.substring(0, symbolStart),
-    marked: str.substring(symbolStart, symbolEnd),
-    suffix: str.substring(symbolEnd),
-});
-
-/*
-    highlightMultiLine
-    Handles three different scenarios:
-
-    1. Current line is the first line of highlight;
-    2. Current line is inside of highlight;
-    3. Current line is the last line of highlights.
-*/
-const highlightMultiLine = (
-    str: string,
-    lineCurr: number,
-    lineStart: number,
-    lineEnd: number,
-    symbolStart: number,
-    symbolEnd: number,
-): HighlightResult => {
-    const res: HighlightResult = {};
-
-    switch (lineCurr) {
-        // First scenario.
-        // Mark whole text from the symbolStart to the end of the line.
-        case lineStart:
-            res.prefix = str.substring(0, symbolStart);
-            res.marked = str.substring(symbolStart);
-            break;
-
-        // Third scenario.
-        // Mark whole text from the beginning of the line to symbolEnd.
-        case lineEnd:
-            res.marked = str.substring(0, symbolEnd);
-            res.suffix = str.substring(symbolEnd);
-            break;
-
-        // Second scenario.
-        // Mark whole line.
-        default:
-            res.marked = str;
-    }
-
-    return res;
 };
 
 type TextItem = Parameters<NonNullable<PageProps["customTextRenderer"]>>[0];
