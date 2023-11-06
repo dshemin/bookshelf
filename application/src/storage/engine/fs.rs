@@ -21,8 +21,8 @@ impl Engine {
     ///
     /// # Errors
     ///
-    /// Will return an error if provided base path pointed to a file but not a
-    /// directory, or can't create the base directory.
+    /// Will return an error if provided base path pointed to a file but not to
+    /// a directory, or can't create the base directory.
     pub fn new<T>(base_path: T) -> Result<Self, FSNewError>
     where
         T: Into<PathBuf>,
@@ -52,9 +52,9 @@ impl Engine {
     ///
     /// # Errors
     ///
-    /// Will return an error if failed read from given source or write to
+    /// Will return an error if failed to read from given source or write to
     /// the file.
-    pub async fn put<R>(&self, name: &str, source: &mut R) -> Result<PathBuf, anyhow::Error>
+    pub async fn put<R>(&self, name: &str, source: &mut R) -> Result<PathBuf, FSPutError>
     where
         R: AsyncRead + Unpin + Send,
     {
@@ -64,9 +64,11 @@ impl Engine {
             p
         };
 
-        let mut dest = File::create(&path).await?;
+        let mut dest = File::create(&path).await.map_err(FSPutError::CreateFile)?;
 
-        io::copy(source, &mut dest).await?;
+        io::copy(source, &mut dest)
+            .await
+            .map_err(FSPutError::Copy)?;
 
         Ok(path)
     }
@@ -77,8 +79,9 @@ impl Engine {
     ///
     /// Will return an error if failed to delete required file.
     pub async fn delete(&self, path: &PathBuf) -> Result<(), anyhow::Error> {
-        if try_exists(path).await? {
-            remove_file(path).await?;
+        let exists = try_exists(path).await.map_err(FSDeleteError::Exists)?;
+        if exists {
+            remove_file(path).await.map_err(FSDeleteError::Remove)?;
         }
         Ok(())
     }
@@ -91,6 +94,24 @@ pub enum FSNewError {
 
     #[error("failed to create directory under base path")]
     FailedToCreateBaseDir(#[from] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum FSPutError {
+    #[error("failed to create destination file")]
+    CreateFile(#[source] io::Error),
+
+    #[error("failed to copy to destination")]
+    Copy(#[source] io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum FSDeleteError {
+    #[error("failed to check file existence")]
+    Exists(#[source] io::Error),
+
+    #[error("failed to remove file")]
+    Remove(#[source] io::Error),
 }
 
 #[cfg(test)]
@@ -170,13 +191,52 @@ mod tests {
 
                 let mut source = StringAsyncReader::new("some data");
 
-                let actual_path = engine.put("file", &mut source).await.unwrap();
+                let actual_path = engine.put(NAME, &mut source).await.unwrap();
 
                 let expected_path = base_path.join(NAME);
 
                 assert!(base_path.exists());
                 assert_eq!("some data".as_bytes(), read(&expected_path).await.unwrap());
                 assert_eq!(expected_path, actual_path);
+            }
+
+            #[tokio::test]
+            async fn failed_to_create_file() {
+                const NAME: &str = "file";
+                let base_path = &get_temp_path("put_failed_to_create_file");
+
+                let engine = Engine::new(base_path).unwrap();
+
+                safe_remove(base_path).unwrap();
+
+                let mut source = StringAsyncReader::new("some data");
+
+                let result = engine.put(NAME, &mut source).await;
+
+                assert!(result.is_err());
+                assert!(
+                    matches!(result.err().unwrap(), FSPutError::CreateFile(err) if err.kind() == io::ErrorKind::NotFound)
+                );
+            }
+
+            #[tokio::test]
+            async fn failed_to_copy() {
+                const NAME: &str = "file";
+                let base_path = &get_temp_path("put_failed_to_copy");
+                defer! {
+                    safe_remove(base_path).unwrap();
+                };
+
+                let engine = Engine::new(base_path).unwrap();
+
+                let mut source = FailedAsyncReader;
+
+                let result = engine.put(NAME, &mut source).await;
+
+                assert!(result.is_err());
+                assert!(
+                    matches!(result.err().unwrap(), FSPutError::Copy(err) if err.kind() == io::ErrorKind::Interrupted)
+                );
             }
         }
 
@@ -249,6 +309,19 @@ mod tests {
                     buf.put_slice(self.data.as_bytes());
                 });
                 Poll::Ready(Ok(()))
+            }
+        }
+
+        struct FailedAsyncReader;
+
+        impl AsyncRead for FailedAsyncReader {
+            #[inline]
+            fn poll_read(
+                self: Pin<&mut Self>,
+                _cx: &mut Context<'_>,
+                _buf: &mut ReadBuf<'_>,
+            ) -> Poll<io::Result<()>> {
+                Poll::Ready(Err(io::Error::from(io::ErrorKind::Interrupted)))
             }
         }
 

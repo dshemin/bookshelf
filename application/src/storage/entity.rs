@@ -45,30 +45,6 @@ impl Storage {
         }
     }
 
-    /// Returns an unique identificator of this storage.
-    pub fn id(&self) -> &ID {
-        &self.id
-    }
-
-    /// Returns a name of this storage.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use application::storage::{Storage, Settings};
-    //
-    /// let settings = Settings::FS{
-    ///     base_path: "/tmp/foo".to_owned(),
-    /// };
-    ///
-    /// let engine = Storage::new("foo", settings);
-    ///
-    /// assert_eq!("foo", engine.name());
-    /// ```
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
     /// Connects this storage to physical storage.
     //
     /// Will return an engine which can be used for managing data on the physical
