@@ -1,4 +1,4 @@
-include .env
+include .env.development
 
 RUSTFMT_FLAGS=--edition 2021
 RUSTFMT_TARGETS=api/**/*.rs application/**/*.rs
