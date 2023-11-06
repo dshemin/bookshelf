@@ -166,4 +166,5 @@ fn setup_storages_endpoints() -> actix_web::Scope {
         .service(endpoints::storages::get)
         .service(endpoints::storages::update)
         .service(endpoints::storages::delete)
+        .service(endpoints::storages::upload_file)
 }

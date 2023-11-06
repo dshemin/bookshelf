@@ -96,7 +96,8 @@ pub enum Settings {
 
 /// The path to file on specific storage.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "type", content = "value")]
 pub enum Path {
+    #[serde(rename = "fs")]
     FS(PathBuf),
 }

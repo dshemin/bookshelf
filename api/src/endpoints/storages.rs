@@ -1,6 +1,11 @@
 use crate::AppState;
-use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use actix_multipart::form::{tempfile::TempFile, MultipartForm};
+use actix_web::error::ResponseError;
+use actix_web::http::header::ContentType;
+use actix_web::http::StatusCode;
+use actix_web::{delete, get, post, put, web, HttpResponse, Responder, Result};
 use application::storage::{self, Settings};
+use derive_more::{Display, Error};
 use serde::Deserialize;
 use tracing::{debug, error};
 
@@ -31,7 +36,7 @@ pub struct StorageCreate {
 
 #[get("")]
 pub async fn list(state: AppState, query: web::Query<Paging>) -> impl Responder {
-    error!(req = tracing::field::debug(&query), "list storages");
+    debug!(req = tracing::field::debug(&query), "list storages");
 
     let cursor = query.cursor.clone();
 
@@ -53,7 +58,7 @@ pub struct Paging {
 
 #[get("/{id}")]
 pub async fn get(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
-    error!(req = tracing::field::debug(&path), "get storage");
+    debug!(req = tracing::field::debug(&path), "get storage");
 
     let id = path.into_inner();
 
@@ -102,7 +107,7 @@ pub async fn update(
 
 #[delete("/{id}")]
 pub async fn delete(state: AppState, path: web::Path<storage::ID>) -> impl Responder {
-    error!(req = tracing::field::debug(&path), "delete storage");
+    debug!(req = tracing::field::debug(&path), "delete storage");
 
     let id = path.into_inner();
 
@@ -115,4 +120,90 @@ pub async fn delete(state: AppState, path: web::Path<storage::ID>) -> impl Respo
             HttpResponse::InternalServerError().finish()
         }
     }
+}
+
+#[post("/{id}/files")]
+pub async fn upload_file(
+    state: AppState,
+    path: web::Path<storage::ID>,
+    MultipartForm(form): MultipartForm<UploadForm>,
+) -> Result<impl Responder, UploadError> {
+    debug!(
+        storage_id = tracing::field::debug(&path),
+        "upload file to storage"
+    );
+
+    let id = path.into_inner();
+
+    let storage = state
+        .storage_services
+        .get
+        .get(id)
+        .await
+        .map_err(|err| {
+            error!(err = err.to_string(), "failed to get storage");
+            UploadError::FailedToGetStorage
+        })?
+        .ok_or(UploadError::StorageNotFound)?;
+
+    let engine = storage.connect().await.map_err(|err| {
+        error!(err = err.to_string(), "failed to connect");
+        UploadError::FailedToConnect
+    })?;
+
+    let path = form.file.file.into_temp_path();
+    let name = form
+        .file
+        .file_name
+        .unwrap_or(uuid::Uuid::new_v4().to_string());
+
+    let mut fp = tokio::fs::File::open(path).await.map_err(|err| {
+        error!(err = err.to_string(), "failed to open temporary file");
+        UploadError::FailedToOpenTemporaryFile
+    })?;
+
+    let path = engine.put(&name, &mut fp).await.map_err(|err| {
+        error!(err = err.to_string(), "failed to put new file to storage");
+        UploadError::FailedToPutFileToStorage
+    })?;
+
+    Ok(HttpResponse::Created().json(path))
+}
+
+#[derive(Debug, Display, Error)]
+pub enum UploadError {
+    #[display(fmt = "failed to get storage")]
+    FailedToGetStorage,
+
+    #[display(fmt = "storage not found")]
+    StorageNotFound,
+
+    #[display(fmt = "failed to connect")]
+    FailedToConnect,
+
+    #[display(fmt = "failed to open temporary file")]
+    FailedToOpenTemporaryFile,
+
+    #[display(fmt = "failed to put file to storage")]
+    FailedToPutFileToStorage,
+}
+
+impl ResponseError for UploadError {
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        HttpResponse::build(self.status_code())
+            .insert_header(ContentType::html())
+            .body(self.to_string())
+    }
+
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match *self {
+            UploadError::StorageNotFound => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+#[derive(Debug, MultipartForm)]
+pub struct UploadForm {
+    file: TempFile,
 }

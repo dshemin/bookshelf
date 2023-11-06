@@ -1,6 +1,6 @@
-mod engine;
 mod entity;
 
+pub mod engine;
 pub mod repository;
 pub mod service;
 
