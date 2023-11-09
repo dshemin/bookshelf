@@ -7,7 +7,7 @@ use tracing_subscriber::layer::SubscriberExt;
 /// Initialize application telemetry.
 pub fn init(commit_hash: &str) -> Result {
     let env_filter = EnvFilter::builder()
-        .with_default_directive(LevelFilter::INFO.into())
+        .with_default_directive(LevelFilter::DEBUG.into())
         .with_env_var("BS_API_LOG")
         .with_regex(false)
         .from_env()?;
@@ -22,7 +22,8 @@ pub fn init(commit_hash: &str) -> Result {
         "Bookshelf".into(),
         std::io::stdout,
         default_fields,
-    );
+    )
+    .skip_fields(["line", "file", "otel.name", "otel.kind", "otel.status_code"].into_iter())?;
 
     let subscriber = tracing_subscriber::registry()
         .with(env_filter)

@@ -1,4 +1,5 @@
 mod config;
+mod container;
 mod endpoints;
 mod telemetry;
 mod version;
@@ -6,9 +7,7 @@ mod version;
 use actix_cors::Cors;
 use actix_web::{http::header, web, App, HttpServer};
 use actix_web_middleware_keycloak_auth::{DecodingKey, KeycloakAuth, Role};
-use application::storage::{repository as storage_repository, service as storage_services};
-use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::sync::Arc;
+use container::Container;
 use tracing::info;
 use tracing_actix_web::TracingLogger;
 
@@ -20,12 +19,7 @@ async fn main() -> std::io::Result<()> {
 
     info!(config = tracing::field::debug(&cfg), "Started");
 
-    let pool = PgPoolOptions::new()
-        .connect(&cfg.pg.conn_uri)
-        .await
-        .map_err(to_std_io_err)?;
-
-    let state = AppStateInner::new(&pool);
+    let container = Container::new(&cfg).await.map_err(to_std_io_err)?;
 
     run_http_server(
         cfg.http.host,
@@ -33,54 +27,10 @@ async fn main() -> std::io::Result<()> {
         cfg.jwt_pub_key,
         cfg.enable_auth,
         cfg.cors.allowed_origin,
-        state,
+        container,
     )
     .await
 }
-
-#[derive(Debug, Clone)]
-pub struct AppStateInner {
-    pub storage_services: Arc<StorageServices>,
-}
-
-impl AppStateInner {
-    fn new(pool: &PgPool) -> Self {
-        let storage_services = Arc::new(StorageServices::new(pool));
-
-        Self { storage_services }
-    }
-}
-
-#[derive(Debug)]
-pub struct StorageServices {
-    pub create: storage_services::Create,
-    pub list: storage_services::List,
-    pub get: storage_services::Get,
-    pub update: storage_services::Update,
-    pub delete: storage_services::Delete,
-}
-
-impl StorageServices {
-    fn new(pool: &PgPool) -> Self {
-        let repository = Box::new(storage_repository::pg::Repository::new(pool.clone()));
-
-        let create = storage_services::Create::new(repository.clone());
-        let list = storage_services::List::new(repository.clone());
-        let get = storage_services::Get::new(repository.clone());
-        let update = storage_services::Update::new(repository.clone());
-        let delete = storage_services::Delete::new(repository);
-
-        Self {
-            create,
-            list,
-            get,
-            update,
-            delete,
-        }
-    }
-}
-
-pub type AppState = web::Data<AppStateInner>;
 
 async fn run_http_server(
     host: String,
@@ -88,16 +38,19 @@ async fn run_http_server(
     jwt_pub_key: String,
     enable_auth: bool,
     allowed_origin: String,
-    state: AppStateInner,
+    container: Container,
 ) -> std::io::Result<()> {
     let key = Box::new(DecodingKey::from_rsa_pem(jwt_pub_key.as_bytes()).map_err(to_std_io_err)?);
 
-    let state = AppState::new(state);
-
     HttpServer::new(move || {
         App::new()
-            .app_data(state.clone())
+            // .app_data(state.clone())
             .wrap(TracingLogger::default())
+            .app_data(web::Data::new(container.storage_create.clone()))
+            .app_data(web::Data::new(container.storage_list.clone()))
+            .app_data(web::Data::new(container.storage_get.clone()))
+            .app_data(web::Data::new(container.storage_update.clone()))
+            .app_data(web::Data::new(container.storage_delete.clone()))
             .configure(configure_api(
                 enable_auth,
                 *(key.clone()),
@@ -123,40 +76,52 @@ fn configure_api(
         let default_headers =
             actix_web::middleware::DefaultHeaders::new().add(("Content-Type", "application/json"));
 
-        let keycloak_auth_admin = {
-            let mut auth = KeycloakAuth::default_with_pk(key);
-            auth.required_roles = vec![Role::Realm {
-                role: "Realm admin".to_owned(),
-            }];
-            auth
-        };
+        let keycloak = setup_keycloak_middleware(enable_auth, key);
 
-        let mut cors = Cors::default()
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-            .allowed_headers(vec![
-                header::AUTHORIZATION,
-                header::ACCEPT,
-                header::CONTENT_TYPE,
-            ])
-            .supports_credentials();
-
-        if allowed_origin == "*" {
-            cors = cors.allow_any_origin();
-        } else {
-            cors = cors.allowed_origin(&allowed_origin);
-        }
+        let cors = setup_cors_middleware(&allowed_origin);
 
         let api = web::scope("/api")
             .wrap(default_headers)
             .wrap(cors)
-            .wrap(actix_web::middleware::Condition::new(
-                enable_auth,
-                keycloak_auth_admin,
-            ))
+            .wrap(keycloak)
             .service(setup_storages_endpoints());
 
         cfg.service(api);
     })
+}
+
+fn setup_keycloak_middleware(enable_auth: bool, key: DecodingKey) -> actix_web::middleware::Condition<KeycloakAuth<actix_web_middleware_keycloak_auth::AlwaysReturnPolicy>> {
+    let keycloak_auth_admin = {
+        let mut auth = KeycloakAuth::default_with_pk(key);
+        auth.required_roles = vec![Role::Realm {
+            role: "Realm admin".to_owned(),
+        }];
+        auth
+    };
+
+    actix_web::middleware::Condition::new(
+        enable_auth,
+        keycloak_auth_admin,
+    )
+}
+
+fn setup_cors_middleware(allowed_origin: &str) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+        .allowed_headers(vec![
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            header::CONTENT_TYPE,
+        ])
+        .supports_credentials();
+
+    if allowed_origin == "*" {
+        cors = cors.allow_any_origin();
+    } else {
+        cors = cors.allowed_origin(allowed_origin);
+    }
+
+    cors
 }
 
 fn setup_storages_endpoints() -> actix_web::Scope {
