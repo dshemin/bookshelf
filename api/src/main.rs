@@ -90,7 +90,12 @@ fn configure_api(
     })
 }
 
-fn setup_keycloak_middleware(enable_auth: bool, key: DecodingKey) -> actix_web::middleware::Condition<KeycloakAuth<actix_web_middleware_keycloak_auth::AlwaysReturnPolicy>> {
+fn setup_keycloak_middleware(
+    enable_auth: bool,
+    key: DecodingKey,
+) -> actix_web::middleware::Condition<
+    KeycloakAuth<actix_web_middleware_keycloak_auth::AlwaysReturnPolicy>,
+> {
     let keycloak_auth_admin = {
         let mut auth = KeycloakAuth::default_with_pk(key);
         auth.required_roles = vec![Role::Realm {
@@ -99,10 +104,7 @@ fn setup_keycloak_middleware(enable_auth: bool, key: DecodingKey) -> actix_web::
         auth
     };
 
-    actix_web::middleware::Condition::new(
-        enable_auth,
-        keycloak_auth_admin,
-    )
+    actix_web::middleware::Condition::new(enable_auth, keycloak_auth_admin)
 }
 
 fn setup_cors_middleware(allowed_origin: &str) -> Cors {

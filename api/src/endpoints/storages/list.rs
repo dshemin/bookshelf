@@ -1,6 +1,6 @@
 use actix_web::{get, web, HttpResponse, Responder};
-use application::Cursor;
 use application::storage::service::List;
+use application::Cursor;
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::{debug, error};

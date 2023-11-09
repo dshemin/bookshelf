@@ -1,11 +1,14 @@
 use actix_web::{delete, web, HttpResponse, Responder};
-use application::storage::service::Delete;
 use application::storage;
+use application::storage::service::Delete;
 use std::sync::Arc;
 use tracing::{debug, error};
 
 #[delete("/{id}")]
-pub async fn delete(service: web::Data<Arc<Delete>>, path: web::Path<storage::ID>) -> impl Responder {
+pub async fn delete(
+    service: web::Data<Arc<Delete>>,
+    path: web::Path<storage::ID>,
+) -> impl Responder {
     debug!(req = tracing::field::debug(&path), "delete storage");
 
     let id = path.into_inner();

@@ -1,6 +1,6 @@
 use application::storage::{repository as storage_repository, service as storage_services};
-use std::sync::Arc;
 use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
 
 use crate::config::Config;
 
@@ -15,9 +15,7 @@ pub struct Container {
 
 impl Container {
     pub async fn new(cfg: &Config) -> anyhow::Result<Self> {
-        let pool = PgPoolOptions::new()
-            .connect(&cfg.pg.conn_uri)
-            .await?;
+        let pool = PgPoolOptions::new().connect(&cfg.pg.conn_uri).await?;
 
         let repository = Box::new(storage_repository::pg::Repository::new(pool));
 

@@ -12,9 +12,7 @@ pub async fn create(
 ) -> impl Responder {
     debug!(req = tracing::field::debug(&req), "create storage");
 
-    let res = service
-        .create(req.name.clone(), req.settings.clone())
-        .await;
+    let res = service.create(req.name.clone(), req.settings.clone()).await;
 
     match res {
         Ok(_) => HttpResponse::Created(),

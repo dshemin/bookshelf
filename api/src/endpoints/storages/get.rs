@@ -1,8 +1,8 @@
 use actix_web::{get, web, HttpResponse, Responder};
-use application::storage::service::Get;
 use application::storage;
-use tracing::{debug, error};
+use application::storage::service::Get;
 use std::sync::Arc;
+use tracing::{debug, error};
 
 #[get("/{id}")]
 pub async fn get(service: web::Data<Arc<Get>>, path: web::Path<storage::ID>) -> impl Responder {
