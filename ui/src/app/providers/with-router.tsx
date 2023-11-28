@@ -9,4 +9,3 @@ export const withRouter: Provider = (component: () => React.ReactNode) => () => 
         </Suspense>
     </BrowserRouter>
 );
-
