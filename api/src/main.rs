@@ -1,6 +1,7 @@
 mod config;
 mod container;
 mod endpoints;
+mod responders;
 mod telemetry;
 mod version;
 
@@ -44,13 +45,14 @@ async fn run_http_server(
 
     HttpServer::new(move || {
         App::new()
-            // .app_data(state.clone())
+            .wrap(actix_web::middleware::NormalizePath::trim())
             .wrap(TracingLogger::default())
             .app_data(web::Data::new(container.storage_create.clone()))
             .app_data(web::Data::new(container.storage_list.clone()))
             .app_data(web::Data::new(container.storage_get.clone()))
             .app_data(web::Data::new(container.storage_update.clone()))
             .app_data(web::Data::new(container.storage_delete.clone()))
+            .app_data(web::Data::new(container.storage_file_uploader.clone()))
             .configure(configure_api(
                 enable_auth,
                 *(key.clone()),

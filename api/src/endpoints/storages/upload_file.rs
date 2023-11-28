@@ -1,17 +1,19 @@
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::error::ResponseError;
-use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpResponse, Responder, Result};
 use application::storage;
-use application::storage::service::Get;
+use application::storage::service::{FileUploader, FileUploadError};
 use derive_more::{Display, Error};
+use serde::Serialize;
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::debug;
+
+use crate::responders::JSONResponseError;
 
 #[post("/{id}/files")]
 pub async fn upload_file(
-    service: web::Data<Arc<Get>>,
+    service: web::Data<Arc<FileUploader>>,
     path: web::Path<storage::ID>,
     MultipartForm(form): MultipartForm<UploadForm>,
 ) -> Result<impl Responder, UploadError> {
@@ -22,73 +24,52 @@ pub async fn upload_file(
 
     let id = path.into_inner();
 
-    let storage = service
-        .get(id)
-        .await
-        .map_err(|err| {
-            error!(err = err.to_string(), "failed to get storage");
-            UploadError::FailedToGetStorage
-        })?
-        .ok_or(UploadError::StorageNotFound)?;
-
-    let engine = storage.connect().await.map_err(|err| {
-        error!(err = err.to_string(), "failed to connect");
-        UploadError::FailedToConnect
-    })?;
-
     let path = form.file.file.into_temp_path();
     let name = form
         .file
         .file_name
         .unwrap_or(uuid::Uuid::new_v4().to_string());
 
-    let mut fp = tokio::fs::File::open(path).await.map_err(|err| {
-        error!(err = err.to_string(), "failed to open temporary file");
-        UploadError::FailedToOpenTemporaryFile
-    })?;
+    let mut fp = tokio::fs::File::open(path)
+        .await
+        .map_err(UploadError::OpenTemporaryFile)?;
 
-    let path = engine.put(&name, &mut fp).await.map_err(|err| {
-        error!(err = err.to_string(), "failed to put new file to storage");
-        UploadError::FailedToPutFileToStorage
-    })?;
+    let path = service
+        .upload(id, &name, &mut fp)
+        .await
+        .map_err(UploadError::UploadError)?;
 
-    Ok(HttpResponse::Created().json(path))
-}
-
-#[derive(Debug, Display, Error)]
-pub enum UploadError {
-    #[display(fmt = "failed to get storage")]
-    FailedToGetStorage,
-
-    #[display(fmt = "storage not found")]
-    StorageNotFound,
-
-    #[display(fmt = "failed to connect")]
-    FailedToConnect,
-
-    #[display(fmt = "failed to open temporary file")]
-    FailedToOpenTemporaryFile,
-
-    #[display(fmt = "failed to put file to storage")]
-    FailedToPutFileToStorage,
-}
-
-impl ResponseError for UploadError {
-    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
-        HttpResponse::build(self.status_code())
-            .insert_header(ContentType::html())
-            .body(self.to_string())
-    }
-
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        match *self {
-            UploadError::StorageNotFound => StatusCode::NOT_FOUND,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
+    Ok(HttpResponse::Created().json(UploadResponse{
+        path,
+    }))
 }
 
 #[derive(Debug, MultipartForm)]
 pub struct UploadForm {
     file: TempFile,
 }
+
+#[derive(Debug, Serialize)]
+pub struct UploadResponse {
+    path: storage::Path,
+}
+
+#[derive(Debug, Display, Error)]
+pub enum UploadError {
+    #[display(fmt = "failed to get storage {}", self.0)]
+    OpenTemporaryFile(std::io::Error),
+
+    #[display(fmt = "{}", self.0)]
+    UploadError(FileUploadError),
+}
+
+impl ResponseError for UploadError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            UploadError::OpenTemporaryFile(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            UploadError::UploadError(err) if matches!(err, FileUploadError::StorageNotFound) => StatusCode::NOT_FOUND,
+            UploadError::UploadError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+impl JSONResponseError for UploadError {}

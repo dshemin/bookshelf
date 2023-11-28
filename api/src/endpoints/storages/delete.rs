@@ -1,25 +1,21 @@
-use actix_web::{delete, web, HttpResponse, Responder};
+use actix_web::{delete, web, HttpResponse, Responder, Result};
 use application::storage;
-use application::storage::service::Delete;
+use application::storage::service::Deleter;
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::debug;
+
+use crate::responders::AnyhowErrorResponder;
 
 #[delete("/{id}")]
 pub async fn delete(
-    service: web::Data<Arc<Delete>>,
+    service: web::Data<Arc<Deleter>>,
     path: web::Path<storage::ID>,
-) -> impl Responder {
+) -> Result<impl Responder, AnyhowErrorResponder> {
     debug!(req = tracing::field::debug(&path), "delete storage");
 
     let id = path.into_inner();
 
-    let res = service.delete(id).await;
+    service.delete(id).await?;
 
-    match res {
-        Ok(()) => HttpResponse::NoContent().finish(),
-        Err(e) => {
-            error!(err = e.to_string(), "failed to delete storage");
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    Ok(HttpResponse::NoContent().finish())
 }

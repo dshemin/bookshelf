@@ -1,25 +1,24 @@
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder, Result};
 use application::storage;
-use application::storage::service::Get;
+use application::storage::service::Getter;
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::debug;
+
+use crate::responders::AnyhowErrorResponder;
 
 #[get("/{id}")]
-pub async fn get(service: web::Data<Arc<Get>>, path: web::Path<storage::ID>) -> impl Responder {
+pub async fn get(
+    service: web::Data<Arc<Getter>>,
+    path: web::Path<storage::ID>,
+) -> Result<impl Responder, AnyhowErrorResponder> {
     debug!(req = tracing::field::debug(&path), "get storage");
 
     let id = path.into_inner();
 
-    let res = service.get(id).await;
+    let s = service.get(id).await?;
 
-    match res {
-        Ok(v) => match v {
-            Some(v) => HttpResponse::Ok().json(v),
-            None => HttpResponse::NotFound().finish(),
-        },
-        Err(e) => {
-            error!(err = e.to_string(), "failed to get storage");
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    Ok(match s {
+        Some(v) => HttpResponse::Ok().json(v),
+        None => HttpResponse::NotFound().finish(),
+    })
 }
