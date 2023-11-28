@@ -3,7 +3,7 @@ use actix_web::error::ResponseError;
 use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpResponse, Responder, Result};
 use application::storage;
-use application::storage::service::{FileUploader, FileUploadError};
+use application::storage::service::{FileUploadError, FileUploader};
 use derive_more::{Display, Error};
 use serde::Serialize;
 use std::sync::Arc;
@@ -39,9 +39,7 @@ pub async fn upload_file(
         .await
         .map_err(UploadError::UploadError)?;
 
-    Ok(HttpResponse::Created().json(UploadResponse{
-        path,
-    }))
+    Ok(HttpResponse::Created().json(UploadResponse { path }))
 }
 
 #[derive(Debug, MultipartForm)]
@@ -67,7 +65,9 @@ impl ResponseError for UploadError {
     fn status_code(&self) -> StatusCode {
         match self {
             UploadError::OpenTemporaryFile(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            UploadError::UploadError(err) if matches!(err, FileUploadError::StorageNotFound) => StatusCode::NOT_FOUND,
+            UploadError::UploadError(err) if matches!(err, FileUploadError::StorageNotFound) => {
+                StatusCode::NOT_FOUND
+            }
             UploadError::UploadError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

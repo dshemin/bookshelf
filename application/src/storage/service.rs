@@ -5,7 +5,7 @@ use tokio::io::AsyncRead;
 
 use crate::{storage, Cursor, PaginatedData};
 
-use super::{Storage, Path};
+use super::{Path, Storage};
 
 /// Creator service.
 ///
@@ -126,24 +126,26 @@ pub struct FileUploader {
 
 impl FileUploader {
     /// Delete storage.
-    pub async fn upload<R>(
-        &self,
-        id: storage::ID,
-        name: &str,
-        source: &mut R,
-    ) -> FileUploadResult
+    pub async fn upload<R>(&self, id: storage::ID, name: &str, source: &mut R) -> FileUploadResult
     where
         R: AsyncRead + Unpin + Send,
     {
-        let storage = self.getter
+        let storage = self
+            .getter
             .get(id)
             .await
             .map_err(FileUploadError::GetStorage)?
             .ok_or(FileUploadError::StorageNotFound)?;
 
-        let engine = storage.connect().await.map_err(FileUploadError::ConnectStorage)?;
+        let engine = storage
+            .connect()
+            .await
+            .map_err(FileUploadError::ConnectStorage)?;
 
-        let path = engine.put(name, source).await.map_err(FileUploadError::PutFileToStorage)?;
+        let path = engine
+            .put(name, source)
+            .await
+            .map_err(FileUploadError::PutFileToStorage)?;
 
         Ok(path)
     }
