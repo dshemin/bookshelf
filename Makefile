@@ -33,6 +33,7 @@ lint/sql:
 .PHONY:devdeps
 devdeps:
 	pip3 install -r requirements.txt
+	pre-commit install
 
 .PHONY: migrate
 migrate:

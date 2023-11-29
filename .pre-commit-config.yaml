@@ -10,7 +10,11 @@ repos:
       - id: check-added-large-files
   - repo: local
     hooks:
-      - id: lint
-        name: "Run make lint"
+      - id: backend-lint
+        name: "Lint backend"
         entry: env sh -c 'make lint'
+        language: system
+      - id: frontend-lint
+        name: "Lint frontend"
+        entry: env sh -c 'yarn --cwd ui lint'
         language: system
