@@ -23,9 +23,11 @@ impl Repository {
     fn hydrate(row: PgRow) -> Storage {
         let settings: types::Json<Settings> = row.get("settings");
 
+        let name: String = row.get("name");
+
         Storage {
             id: row.get("id"),
-            name: row.get("name"),
+            name: storage::Name::new_valid(name),
             settings: settings.0,
         }
     }
