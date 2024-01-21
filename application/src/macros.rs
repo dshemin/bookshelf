@@ -1,11 +1,11 @@
 #[macro_export]
 macro_rules! domain_type {
-    ( $tname:ident, $errname:ident, $type:ty, $rules:expr ) => {
+    ( $tname:ident, $errname:ident, $type:ty, $($rules:expr),+ ) => {
         #[derive(
             std::fmt::Debug, garde::Validate, serde::Serialize, std::cmp::PartialEq, std::cmp::Eq,
         )]
         #[garde(transparent)]
-        pub struct $tname(#[garde($rules)] $type);
+        pub struct $tname(#[garde($($rules),+)] $type);
 
         impl $tname {
             pub fn new<T>(value: T) -> $errname
