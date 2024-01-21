@@ -32,14 +32,14 @@ impl Storage {
     ///     base_path: "/tmp/foo".to_owned(),
     /// };
     ///
-    /// let engine = Storage::new(Name::new("foo").unwrap(), settings);
+    /// let storage = Storage::new(Name::new("foo").unwrap(), settings);
     /// ```
-    pub fn new(name: Name, settings: Settings) -> NewResult {
-        Ok(Self {
+    pub fn new(name: Name, settings: Settings) -> Self {
+        Self {
             id: Uuid::new_v4(),
             name,
             settings,
-        })
+        }
     }
 
     /// Connects this storage to physical storage.
@@ -54,8 +54,6 @@ impl Storage {
         Ok(engine)
     }
 }
-
-pub type NewResult = Result<Storage, garde::Report>;
 
 /// Storage unique identifier.
 pub type ID = Uuid;
