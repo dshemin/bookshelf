@@ -1,7 +1,9 @@
 use serde::Serialize;
 
 mod cursor;
+mod macros;
 pub mod storage;
+pub mod user;
 
 pub use cursor::Cursor;
 

@@ -37,7 +37,7 @@ devdeps:
 
 .PHONY: migrate
 migrate:
-	sqlx migrate run  --database-url ${BS_API_PG_CONN_URI}
+	sqlx migrate run --database-url ${BS_API_PG_CONN_URI}
 
 .PHONY: keycloak/sync-realm
 keycloak/sync-realm:

@@ -1,87 +1,13 @@
 use std::path::PathBuf;
 
+use garde::Validate;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use uuid::Uuid;
+
+use crate::domain_type;
 
 use super::engine::fs::Engine as FSEngine;
 use super::engine::Engine;
-
-/// Storage unique identifier.
-pub type ID = Uuid;
-
-/// Storage name.
-#[derive(Debug, Serialize, PartialEq, Eq)]
-pub struct Name(String);
-
-const NAME_MIN_LEN: usize = 3;
-const NAME_MAX_LEN: usize = 255;
-
-impl Name {
-    pub fn new<T>(value: T) -> NameResult
-    where
-        T: Into<String>,
-    {
-        let v: String = value.into();
-
-        if let Some(err) = Self::validate(&v) {
-            return Err(err);
-        }
-        Ok(Self(v))
-    }
-
-    pub(crate) fn new_valid<T>(value: T) -> Self
-    where
-        T: Into<String>,
-    {
-        Self(value.into())
-    }
-
-    fn validate(value: &str) -> Option<NameError> {
-        if value.len() < NAME_MIN_LEN {
-            return Some(NameError::TooShort);
-        }
-
-        if value.len() > NAME_MAX_LEN {
-            return Some(NameError::TooLong);
-        }
-
-        None
-    }
-}
-
-impl Into<String> for Name {
-    fn into(self) -> String {
-        self.0
-    }
-}
-
-impl TryFrom<String> for Name {
-    type Error = NameError;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Name::new(value)
-    }
-}
-
-impl TryFrom<&str> for Name {
-    type Error = NameError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Name::new(value)
-    }
-}
-
-pub type NameResult = Result<Name, NameError>;
-
-#[derive(Debug, Error)]
-pub enum NameError {
-    #[error("too short, should have at least {NAME_MIN_LEN} characters")]
-    TooShort,
-
-    #[error("too long, should have no more than {NAME_MAX_LEN} characters")]
-    TooLong,
-}
 
 /// The storage.
 ///
@@ -129,13 +55,12 @@ impl Storage {
     }
 }
 
-pub type NewResult = Result<Storage, NewError>;
+pub type NewResult = Result<Storage, garde::Report>;
 
-#[derive(Debug, Error)]
-pub enum NewError {
-    #[error("invalid name: {0}")]
-    InvalidName(#[from] NameError),
-}
+/// Storage unique identifier.
+pub type ID = Uuid;
+
+domain_type!(Name, NameResult, String, length(min = 3, max = 255));
 
 /// Settings for the storage.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -180,15 +105,17 @@ mod tests {
                 let result = Name::new("fo");
 
                 assert!(result.is_err());
-                assert!(matches!(result.err().unwrap(), NameError::TooShort));
+                let err = result.err().unwrap();
+                assert_eq!("length is lower than 3", err.to_string());
             }
 
             #[test]
             fn invalid_greater_than_max() {
-                let result = Name::new("1".repeat(NAME_MAX_LEN + 1));
+                let result = Name::new("1".repeat(256));
 
                 assert!(result.is_err());
-                assert!(matches!(result.err().unwrap(), NameError::TooLong));
+                let err = result.err().unwrap();
+                assert_eq!("length is greater than 255", err.to_string());
             }
         }
     }
