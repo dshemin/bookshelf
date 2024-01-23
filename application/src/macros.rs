@@ -21,6 +21,7 @@ macro_rules! domain_type {
                 Ok(v)
             }
 
+            #[allow(dead_code)]
             pub(crate) fn new_valid<T>(value: T) -> Self
             where
                 T: std::convert::Into<$type>,
@@ -31,6 +32,7 @@ macro_rules! domain_type {
 
         pub type $errname = std::result::Result<$tname, garde::Error>;
 
+        #[allow(clippy::from_over_into)]
         impl std::convert::Into<$type> for $tname {
             fn into(self) -> $type {
                 self.0
