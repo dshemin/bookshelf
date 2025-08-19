@@ -1,3 +1,4 @@
-/.vscode
-/target
+/api/target
 /.env
+/development/kanidm/data
+/development/!kanidm/data/server.toml
