@@ -5,10 +5,10 @@
 set -e
 
 if [ -e /data/chain.pem ]; then
-	echo "certificates are exists"
+	echo "Certificates are exists, skip"
 	exit 0
 fi
 
-ls -la /sbin
+echo "Generate certificates"
 kanidmd cert-generate
 

@@ -4,23 +4,28 @@
 
 set -e
 
-PASS_FILE='/data/admin.pass'
+ADMIN_PASS_FILE='/data/admin.pass'
+IDM_ADMIN_PASS_FILE='/data/idm-admin.pass'
 
 main() {
-	recover_pass
+	recover admin $ADMIN_PASS_FILE
+	recover idm_admin $IDM_ADMIN_PASS_FILE
 }
 
-recover_pass() {
-	# Make sure we didn't run twice.
-	if [ -e $PASS_FILE ]; then
-		echo "Admin password already recovered"
+recover() {
+	user="$1"
+	path="$2"
+
+	if [ -e $path ]; then
+		echo "Password for $user already recovered"
 		return
 	fi
 
-	kanidmd recover-account admin 2>/dev/null | \
+	echo "Recover password for $user"
+	kanidmd recover-account $user 2>/dev/null | \
 		grep new_password | \
 		cut -d ':' -f 3 | \
-		tr -d ' "' > $PASS_FILE
+		tr -d ' "' > $path
 }
 
 main
