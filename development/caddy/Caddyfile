@@ -1,0 +1,5 @@
+127.0.0.1.nip.io {
+	log
+	tls internal
+	reverse_proxy host.docker.internal:3000
+}

@@ -13,11 +13,12 @@ main() {
 }
 
 create_oauth() {
-	NAME="bookshelf"
-	REDIRECT_URL="https://127.0.0.1.nip.io/oauth2/handler"
+	local NAME="bookshelf"
+	local BASE_URL="https://127.0.0.1.nip.io"
+	local REDIRECT_URL="${BASE_URL}/oauth2/handler"
 
 	echo "Create client"
-	kanidm system oauth2 create $NAME "Bookshelf" https://idm.127.0.0.1.nip.io --name idm_admin
+	kanidm system oauth2 create $NAME "Bookshelf" ${BASE_URL} --name idm_admin
 
 	echo "Add redirect url"
 	kanidm system oauth2 add-redirect-url $NAME $REDIRECT_URL --name idm_admin

@@ -34,6 +34,7 @@ services:
       retries: 3
       start_period: 5s
 
+  # Some setup before the first start of Kanidm.
   idm-setup-before:
     build:
       dockerfile: ./development/kanidm/setup.dockerfile
@@ -67,6 +68,17 @@ services:
         condition: service_healthy
     command: "/setup.sh"
 
+  # Reverse proxy for adding HTTPS for API.
+  # Important note: don't forget to enable Settings->Resources->Network->Enable
+  # host networking for Docker Desktop or caddy will not be able to proxy requests
+  # to the host.
+  caddy:
+    image: caddy:2.10.2-alpine
+    volumes:
+      - './development/caddy:/etc/caddy:ro'
+    network_mode: host
+
 volumes:
   pg_data:
   minio_data:
+
