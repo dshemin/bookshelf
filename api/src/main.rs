@@ -7,6 +7,7 @@ use axum::{
     response::Redirect,
     routing::get,
 };
+use log::info;
 use serde::Deserialize;
 use std::future::Future;
 use std::{collections::HashMap, sync::Arc};
@@ -20,12 +21,12 @@ use oauth2::{AuthorizationCode, PkceCodeVerifier, TokenResponse};
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let cfg = config::load();
 
-    println!("config: {:?}", cfg);
-
     let state = AppState {
-        config: cfg,
+        config: cfg.clone(),
         state: Arc::new(Mutex::new(HashMap::new())),
     };
 
@@ -36,7 +37,7 @@ async fn main() {
         .route("/oauth2/handler", get(oauth2_handler))
         .with_state(state);
 
-    println!("Starting server...");
+    info!(config:? = &cfg; "starting server...");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
@@ -79,7 +80,6 @@ pub struct OAuth2Callback {
 }
 
 async fn oauth2_handler(State(state): State<AppState>, query: Query<OAuth2Callback>) -> String {
-    println!("oauth2_handler");
     let m = state.state.lock().await;
 
     let verifier = m.get(&query.state.clone()).unwrap();
@@ -97,7 +97,7 @@ fn get_client(cfg: config::AuthConfig) -> CustomProvider {
         cfg.auth_url,
         cfg.token_url,
         cfg.client_id,
-        cfg.client_secret,
+        cfg.client_secret.into(),
         cfg.redirect_url,
     )
 }
@@ -230,10 +230,6 @@ pub async fn async_http_client(request: HttpRequest) -> Result<HttpResponse, req
     let client = {
         let builder = reqwest::Client::builder();
 
-        // Following redirects opens the client up to SSRF vulnerabilities.
-        // but this is not possible to prevent on wasm targets
-        #[cfg(not(target_arch = "wasm32"))]
-        let builder = builder.redirect(reqwest::redirect::Policy::none());
         let builder = builder.danger_accept_invalid_certs(true);
 
         builder.build()?
