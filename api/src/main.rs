@@ -1,10 +1,10 @@
 mod config;
 
 use axum::{
-    Router,
     extract::{Query, State},
     response::Redirect,
     routing::get,
+    Router,
 };
 use log::info;
 use serde::Deserialize;
@@ -14,10 +14,9 @@ use thiserror::Error;
 use tokio::sync::Mutex;
 
 use oauth2::{
-    AuthUrl, ClientId, ClientSecret, CsrfToken, HttpRequest, HttpResponse, PkceCodeChallenge,
-    RedirectUrl, RequestTokenError, Scope, StandardErrorResponse, TokenUrl,
     basic::{BasicClient, BasicErrorResponseType},
-    url,
+    url, AuthUrl, ClientId, ClientSecret, CsrfToken, HttpRequest, HttpResponse, PkceCodeChallenge,
+    RedirectUrl, RequestTokenError, Scope, StandardErrorResponse, TokenUrl,
 };
 use oauth2::{AuthorizationCode, PkceCodeVerifier, TokenResponse};
 
