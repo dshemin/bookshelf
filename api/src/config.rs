@@ -19,9 +19,9 @@ pub struct AuthConfig {
 #[derive(Clone)]
 pub struct Secret(String);
 
-impl Into<String> for Secret {
-    fn into(self) -> String {
-        self.0
+impl From<Secret> for String {
+    fn from(val: Secret) -> String {
+        val.0
     }
 }
 
@@ -44,7 +44,7 @@ impl fmt::Debug for Secret {
 }
 
 pub fn load() -> Config {
-    let get = |name: &str| env::var(name).unwrap_or(String::new());
+    let get = |name: &str| env::var(name).unwrap_or_default();
 
     Config {
         auth: AuthConfig {

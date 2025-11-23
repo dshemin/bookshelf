@@ -1,6 +1,5 @@
 mod config;
 
-use async_trait::async_trait;
 use axum::{
     Router,
     extract::{Query, State},
@@ -11,11 +10,14 @@ use log::info;
 use serde::Deserialize;
 use std::future::Future;
 use std::{collections::HashMap, sync::Arc};
+use thiserror::Error;
 use tokio::sync::Mutex;
 
 use oauth2::{
     AuthUrl, ClientId, ClientSecret, CsrfToken, HttpRequest, HttpResponse, PkceCodeChallenge,
-    RedirectUrl, Scope, TokenUrl, basic::BasicClient,
+    RedirectUrl, RequestTokenError, Scope, StandardErrorResponse, TokenUrl,
+    basic::{BasicClient, BasicErrorResponseType},
+    url,
 };
 use oauth2::{AuthorizationCode, PkceCodeVerifier, TokenResponse};
 
@@ -92,8 +94,8 @@ async fn oauth2_handler(State(state): State<AppState>, query: Query<OAuth2Callba
         .unwrap()
 }
 
-fn get_client(cfg: config::AuthConfig) -> CustomProvider {
-    CustomProvider::new(
+fn get_client(cfg: config::AuthConfig) -> OAuthProvider {
+    OAuthProvider::new(
         cfg.auth_url,
         cfg.token_url,
         cfg.client_id,
@@ -103,7 +105,7 @@ fn get_client(cfg: config::AuthConfig) -> CustomProvider {
 }
 
 #[derive(Clone)]
-pub struct CustomProvider {
+pub struct OAuthProvider {
     pub auth_url: String,
     pub token_url: String,
     pub client_id: String,
@@ -125,7 +127,7 @@ pub struct StateAuth {
     pub verifier: String,
 }
 
-impl CustomProvider {
+impl OAuthProvider {
     pub fn new(
         auth_url: String,
         token_url: String,
@@ -133,7 +135,7 @@ impl CustomProvider {
         client_secret: String,
         redirect_url: String,
     ) -> Self {
-        CustomProvider {
+        OAuthProvider {
             auth_url,
             token_url,
             client_id,
@@ -142,61 +144,37 @@ impl CustomProvider {
             state: None,
         }
     }
-}
 
-/// OAuthClient is the main struct of the lib, it will handle all the connection with the provider
-#[async_trait]
-pub trait OAuthClient {
-    fn get_client(&self) -> Result<BasicClient, ()>;
+    fn get_client(&self) -> Result<BasicClient, GetClientError> {
+        let client_id = ClientId::new(self.client_id.clone());
+        let client_secret = ClientSecret::new(self.client_secret.clone());
+        let auth_url = AuthUrl::new(self.auth_url.clone()).map_err(GetClientError::ParseAuthURL)?;
+        let token_url =
+            TokenUrl::new(self.token_url.clone()).map_err(GetClientError::ParseTokenURL)?;
 
-    /// Get fields data from generated URL
-    /// # Return
-    /// StateAuth - The state, verifier and url_generated
-    fn get_state(&self) -> Option<StateAuth>;
+        let client = BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url));
 
-    /// Generate the URL to redirect the user to the provider
-    /// # Arguments
-    /// * `scopes` - Vec<String> - The scopes that you want to access in the provider
-    /// * `save` - F - The function that will use to save your state in the db/memory
-    async fn generate_url<F, Fut>(mut self, scopes: Vec<String>, save: F) -> Result<Box<Self>, ()>
-    where
-        F: FnOnce(StateAuth) -> Fut + Send,
-        Fut: Future<Output = ()> + Send;
+        let client = client.set_redirect_uri(
+            RedirectUrl::new(self.redirect_url.clone())
+                .map_err(GetClientError::ParseRedirectURL)?,
+        );
 
-    /// Generate the token from the code and verifier
-    /// # Arguments
-    /// * `code` - String - The code that the provider will return after the user accept the auth
-    /// * `verifier` - String - The verifier that was generated in the first step
-    /// # Return
-    /// The token generated
-    async fn generate_token(&self, code: String, verifier: String) -> Result<String, ()>;
-}
-
-#[async_trait]
-impl OAuthClient for CustomProvider {
-    fn get_client(&self) -> Result<BasicClient, ()> {
-        Ok(BasicClient::new(
-            ClientId::new(self.client_id.clone()),
-            Some(ClientSecret::new(self.client_secret.clone())),
-            AuthUrl::new(self.auth_url.clone()).unwrap(),
-            Some(TokenUrl::new(self.token_url.clone()).unwrap()),
-        )
-        .set_redirect_uri(RedirectUrl::new(self.redirect_url.clone()).unwrap()))
+        Ok(client)
     }
 
-    fn get_state(&self) -> Option<StateAuth> {
-        self.state.clone()
-    }
-
-    async fn generate_url<F, Fut>(mut self, scopes: Vec<String>, save: F) -> Result<Box<Self>, ()>
+    async fn generate_url<F, Fut>(
+        mut self,
+        scopes: Vec<String>,
+        save: F,
+    ) -> Result<Box<Self>, GetClientError>
     where
         F: FnOnce(StateAuth) -> Fut + Send,
         Fut: Future<Output = ()> + Send,
     {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
-        let binding = self.get_client();
-        let (auth_url, csrf_token) = binding?
+        let binding = self.get_client()?;
+        let (auth_url, csrf_token) = binding
             .authorize_url(CsrfToken::new_random)
             .add_scopes(scopes.into_iter().map(Scope::new).collect::<Vec<Scope>>())
             .set_pkce_challenge(pkce_challenge)
@@ -214,16 +192,42 @@ impl OAuthClient for CustomProvider {
         Ok(Box::new(self.clone()))
     }
 
-    async fn generate_token(&self, code: String, verifier: String) -> Result<String, ()> {
+    async fn generate_token(
+        &self,
+        code: String,
+        verifier: String,
+    ) -> Result<String, GenerateTokenError> {
         let token = self
             .get_client()?
             .exchange_code(AuthorizationCode::new(code.clone()))
             .set_pkce_verifier(PkceCodeVerifier::new(verifier.clone()))
             .request_async(async_http_client)
-            .await
-            .unwrap();
+            .await?;
         Ok(token.access_token().secret().to_string())
     }
+}
+
+#[derive(Error, Debug)]
+pub enum GetClientError {
+    #[error("parse auth url: {0}")]
+    ParseAuthURL(url::ParseError),
+
+    #[error("parse token url: {0}")]
+    ParseTokenURL(url::ParseError),
+
+    #[error("parse redirect url: {0}")]
+    ParseRedirectURL(url::ParseError),
+}
+
+#[derive(Error, Debug)]
+pub enum GenerateTokenError {
+    #[error("get client")]
+    GetClient(#[from] GetClientError),
+
+    #[error("request generate token endpoint")]
+    Request(
+        #[from] RequestTokenError<reqwest::Error, StandardErrorResponse<BasicErrorResponseType>>,
+    ),
 }
 
 pub async fn async_http_client(request: HttpRequest) -> Result<HttpResponse, reqwest::Error> {
