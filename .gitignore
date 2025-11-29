@@ -1,4 +1,4 @@
-/api/target
+/target
 /.env*
-/development/kanidm/data
-/development/!kanidm/data/server.toml
+/development/db
+/data
