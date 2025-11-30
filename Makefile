@@ -1,5 +1,6 @@
 RUSTFMT_FLAGS=--edition 2021
 RUSTFMT_TARGETS=./**/*.rs
+DIESEL=diesel --database-url "sqlite://./development/db"
 
 .PHONY: help
 help:		## Show this help.
@@ -20,4 +21,5 @@ lint/rust:	## Run Ruse linters.
 
 .PHONY: setup
 setup:		## Prepeare just cloned repo for development.
-	diesel --database-url "sqlite://./development/db" setup
+	$(DIESEL) setup
+	$(DIESEL) migration run

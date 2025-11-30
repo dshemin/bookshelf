@@ -1,4 +1,5 @@
 /target
 /.env*
+/!.env.example
 /development/db
 /data

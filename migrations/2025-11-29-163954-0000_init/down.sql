@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS "bookmaks";
+DROP TABLE IF EXISTS "highlights";
+DROP TABLE IF EXISTS "books_tags";
+DROP TABLE IF EXISTS "books_authors";
+DROP TABLE IF EXISTS "tags";
+DROP TABLE IF EXISTS "authors";
+DROP TABLE IF EXISTS "books";
+DROP TABLE IF EXISTS "users";
+DROP TABLE IF EXISTS "storages";
