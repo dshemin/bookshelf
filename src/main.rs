@@ -2,7 +2,6 @@ mod config;
 
 use axum::{Router, routing::get};
 use log::info;
-use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 #[tokio::main]
@@ -13,7 +12,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let state = AppState {
         config: cfg.clone(),
-        state: Arc::new(Mutex::new(HashMap::new())),
     };
 
     let app = Router::new()
@@ -22,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     info!(config:? = &cfg; "starting server...");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(cfg.address).await.unwrap();
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }
@@ -30,5 +28,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[derive(Clone)]
 struct AppState {
     config: config::Config,
-    state: Arc<Mutex<HashMap<String, String>>>,
 }

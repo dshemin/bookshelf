@@ -1,5 +1,6 @@
 /target
-/.env*
-/!.env.example
+.env*
+!.env.example
 /development/db
 /data
+/tests/venv

@@ -3,6 +3,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub address: String,
     pub db: Secret,
 }
 
@@ -17,6 +18,7 @@ pub fn load() -> dotenvy::Result<Config> {
     let get = |name: &str| env::var(name).unwrap_or_default();
 
     Ok(Config {
+        address: get("BOOKSHELF_ADDRESS"),
         db: get("BOOKSHELF_DATABASE_URL").into(),
     })
 }
