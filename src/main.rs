@@ -33,8 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn setup_logger() {
     env_logger::builder()
-        .parse_env("BOOKSHELF_LOG")
         .filter_level(log::LevelFilter::Info)
+        .parse_env("BOOKSHELF_LOG")
         .format_file(true)
         .format_line_number(true)
         .init();
