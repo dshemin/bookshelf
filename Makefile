@@ -23,3 +23,7 @@ lint/rust:	## Run Ruse linters.
 setup:		## Prepeare just cloned repo for development.
 	$(DIESEL) setup
 	$(DIESEL) migration run
+
+.PHONY: update-schema
+update-schema:
+	$(DIESEL) print-schema > src/schema.rs

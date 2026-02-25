@@ -1,4 +1,6 @@
 mod config;
+mod schema;
+mod sqlite;
 
 use axum::{Router, routing::get};
 use log::info;
@@ -9,9 +11,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_logger();
 
     let cfg = config::load()?;
+    let db_url: String = cfg.db.clone().into();
 
     let state = AppState {
         config: cfg.clone(),
+        db: sqlite::connect(&db_url).await?,
     };
 
     let app = Router::new()
@@ -57,4 +61,5 @@ async fn shutdown_signal() {
 #[derive(Clone)]
 struct AppState {
     config: config::Config,
+    db: sqlite::ConnectionPool,
 }

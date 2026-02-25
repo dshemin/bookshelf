@@ -28,10 +28,17 @@ pub fn load() -> dotenvy::Result<Config> {
 pub struct Secret(String);
 
 impl From<Secret> for String {
-    fn from(val: Secret) -> String {
+    fn from(val: Secret) -> Self {
         val.0
     }
 }
+
+// TODO(dshemin): find a way to convert from Secret to &str without additional
+// conversion to String.
+// impl From<Secret> for &str {
+//     fn from(value: Secret) -> Self {
+//     }
+// }
 
 impl From<String> for Secret {
     fn from(value: String) -> Self {
