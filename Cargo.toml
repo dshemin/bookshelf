@@ -8,15 +8,13 @@ diesel = { version = "2.2.0", features = ["sqlite", "returning_clauses_for_sqlit
 diesel-async = { version = "0.7.4", features = ["sqlite", "deadpool", "sync-connection-wrapper", "async-connection-wrapper"] }
 diesel_migrations = "2.3.0"
 dotenvy = "0.15.7"
-async-trait = "0.1.89"
 axum = { version = "0.8.4", features = ["macros"] }
 env_logger = { version = "0.11.8", default-features = false, features = ["kv"] }
 log = { version = "0.4.28", features = ["kv", "kv_std"] }
-oauth2 = "4.4.2"
-reqwest = "0.11"
-serde = { version = "1.0.219", features = ["derive"] }
-thiserror = "2.0.17"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread", "signal"] }
 libsqlite3-sys = { version = "0.35", features = ["bundled"] }
 anyhow = "1.0.102"
+
+[package.metadata.cargo-machete]
+ignored = ["libsqlite3-sys"]
 

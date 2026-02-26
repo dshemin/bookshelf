@@ -2,7 +2,7 @@ mod config;
 mod schema;
 mod sqlite;
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use log::info;
 use tokio::signal;
 

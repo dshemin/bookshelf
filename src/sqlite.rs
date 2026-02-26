@@ -1,10 +1,10 @@
-use diesel::Connection as CC;
 use diesel::sqlite::SqliteConnection;
-use diesel_async::pooled_connection::{AsyncDieselConnectionManager, deadpool::Pool};
+use diesel::Connection as CC;
+use diesel_async::pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager};
 use diesel_async::sync_connection_wrapper::SyncConnectionWrapper;
-use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-use log::{Level, debug, info, log_enabled};
+use log::{debug, info, log_enabled, Level};
 
 use anyhow::anyhow;
 

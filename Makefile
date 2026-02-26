@@ -18,6 +18,7 @@ lint/rust:	## Run Ruse linters.
 	rustfmt $(RUSTFMT_FLAGS) --check --files-with-diff $(RUSTFMT_TARGETS)
 	cargo check
 	cargo clippy
+	cargo machete
 
 .PHONY: update-schema
 update-schema:
