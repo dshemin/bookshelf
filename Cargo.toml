@@ -1,5 +1,6 @@
 [package]
-name = "api"
+name = "bookshelf"
+description = "The application to store and read all your books in one place"
 version = "0.1.0"
 edition = "2024"
 
@@ -14,6 +15,7 @@ log = { version = "0.4.28", features = ["kv", "kv_std"] }
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread", "signal"] }
 libsqlite3-sys = { version = "0.35", features = ["bundled"] }
 anyhow = "1.0.102"
+clap = { version = "4.5.60", features = ["derive"] }
 
 [package.metadata.cargo-machete]
 ignored = ["libsqlite3-sys"]

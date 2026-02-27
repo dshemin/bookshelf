@@ -2,9 +2,14 @@ mod config;
 mod schema;
 mod sqlite;
 
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
+use clap::Parser;
 use log::info;
 use tokio::signal;
+
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,6 +17,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cfg = config::load()?;
     let db_url: String = cfg.db.clone().into();
+
+    let cli = Cli::parse();
 
     let state = AppState {
         config: cfg.clone(),
