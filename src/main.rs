@@ -1,15 +1,47 @@
 mod config;
 mod schema;
 mod sqlite;
+mod users;
 
 use axum::{Router, routing::get};
-use clap::Parser;
+use clap::{Args, Parser, Subcommand};
 use log::info;
 use tokio::signal;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
-struct Cli {}
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Manage users.
+    User(UserArgs),
+}
+
+#[derive(Debug, Args)]
+struct UserArgs {
+    #[command(subcommand)]
+    command: UserCommands,
+}
+
+#[derive(Debug, Subcommand)]
+enum UserCommands {
+    /// Adds new user with provided login and password.
+    Add {
+        /// New user's login.
+        login: String,
+        /// New user's password.
+        password: String,
+    },
+}
+
+#[derive(Clone)]
+struct Container {
+    user: users::Service,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,11 +50,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = config::load()?;
     let db_url: String = cfg.db.clone().into();
 
-    let cli = Cli::parse();
+    let pool = sqlite::connect(&db_url).await?;
+    let container = Container {
+        user: users::Service::new(pool),
+    };
+
+    if !handle_cli(&container).await? {
+        return Ok(());
+    }
 
     let state = AppState {
         config: cfg.clone(),
-        db: sqlite::connect(&db_url).await?,
+        container,
     };
 
     let app = Router::new()
@@ -47,6 +86,25 @@ fn setup_logger() {
         .init();
 }
 
+async fn handle_cli(container: &Container) -> anyhow::Result<bool> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::User(args) => match args.command {
+            UserCommands::Add { login, password } => {
+                println!("Create new user");
+                let user = users::User::new(login, password, String::new())?;
+                container.user.create(user).await?;
+                return Ok(false);
+            }
+            _ => {}
+        },
+        _ => {}
+    };
+
+    return Ok(true);
+}
+
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c().await.expect("can't install CTRL-C signal");
@@ -68,5 +126,5 @@ async fn shutdown_signal() {
 #[derive(Clone)]
 struct AppState {
     config: config::Config,
-    db: sqlite::ConnectionPool,
+    container: Container,
 }

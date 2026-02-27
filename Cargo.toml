@@ -16,6 +16,8 @@ tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread", "signal"]
 libsqlite3-sys = { version = "0.35", features = ["bundled"] }
 anyhow = "1.0.102"
 clap = { version = "4.5.60", features = ["derive"] }
+uuid = { version = "1.21.0", features = ["v7"] }
+argon2 = { version = "0.5.3", features = ["std"] }
 
 [package.metadata.cargo-machete]
 ignored = ["libsqlite3-sys"]
