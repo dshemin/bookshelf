@@ -1,0 +1,20 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-yaml
+    - id: check-merge-conflict
+    - id: check-toml
+    - id: detect-private-key
+- repo: local
+  hooks:
+    - id: run-make-fmt
+      name: Run Make Fmt
+      entry: make fmt
+      language: system
+    - id: run-make-lint
+      name: Run Make Lint
+      entry: make lint
+      language: system
