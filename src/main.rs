@@ -122,7 +122,7 @@ async fn handle_cli(container: &Container) -> anyhow::Result<bool> {
         },
     };
 
-    return Ok(true);
+    Ok(true)
 }
 
 async fn shutdown_signal() {

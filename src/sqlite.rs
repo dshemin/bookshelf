@@ -37,7 +37,7 @@ fn migrate(db_url: &str) -> anyhow::Result<()> {
             .map_err(|err| anyhow!(err))?
             .iter()
             .for_each(|m| {
-                debug!("apply migration {}", m.name().to_string());
+                debug!("apply migration {}", m.name());
             });
     }
 
@@ -62,9 +62,9 @@ impl ID {
     }
 }
 
-impl Into<String> for ID {
-    fn into(self) -> String {
-        self.0.to_string()
+impl From<ID> for String {
+    fn from(value: ID) -> Self {
+        value.0.to_string()
     }
 }
 

@@ -30,9 +30,9 @@ impl User {
     pub fn new(login: String, password: String, role: String) -> anyhow::Result<Self> {
         Ok(User {
             id: ID::new(),
-            login: login,
+            login,
             password: Self::hash_password(&password)?,
-            role: role,
+            role,
         })
     }
 
@@ -56,7 +56,7 @@ pub struct Service {
 
 impl Service {
     pub fn new(pool: sqlite::ConnectionPool) -> Self {
-        Self { pool: pool }
+        Self { pool }
     }
 
     pub async fn create(&self, user: User) -> Result<(), CreateError> {
@@ -95,9 +95,7 @@ pub enum CreateError {
 impl From<DatabaseError> for CreateError {
     fn from(value: DatabaseError) -> Self {
         match value {
-            DatabaseError::DatabaseError(kind, info)
-                if kind == DatabaseErrorKind::UniqueViolation =>
-            {
+            DatabaseError::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
                 CreateError::AlreadyExists
             }
             err => CreateError::ResultError(err),
