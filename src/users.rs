@@ -1,15 +1,20 @@
-use std::sync::LazyLock;
-
-use diesel::{insert_into, prelude::*};
-use diesel_async::RunQueryDsl;
-
+use crate::{
+    schema::users::{self, dsl},
+    sqlite::{self, ID},
+};
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
+use diesel::{
+    insert_into,
+    prelude::*,
+    result::{DatabaseErrorKind, Error as DatabaseError},
+};
+use diesel_async::{RunQueryDsl, pooled_connection::deadpool::PoolError};
+use std::sync::LazyLock;
 
-use crate::schema::users::{self, dsl};
-use crate::sqlite::{self, ID};
+use thiserror::Error;
 
 #[derive(Queryable, Selectable, Insertable)]
 #[diesel(table_name = users)]
@@ -52,7 +57,7 @@ impl Service {
         Self { pool: pool }
     }
 
-    pub async fn create(&self, user: User) -> anyhow::Result<()> {
+    pub async fn create(&self, user: User) -> Result<(), CreateError> {
         let mut conn = self.pool.get().await?;
 
         insert_into(dsl::users)
@@ -61,5 +66,30 @@ impl Service {
             .await?;
 
         Ok(())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum CreateError {
+    #[error("user already exists")]
+    AlreadyExists,
+
+    #[error("{0}")]
+    PoolError(#[from] PoolError),
+
+    #[error("{0}")]
+    ResultError(diesel::result::Error),
+}
+
+impl From<DatabaseError> for CreateError {
+    fn from(value: DatabaseError) -> Self {
+        match value {
+            DatabaseError::DatabaseError(kind, info)
+                if kind == DatabaseErrorKind::UniqueViolation =>
+            {
+                CreateError::AlreadyExists
+            }
+            err => CreateError::ResultError(err),
+        }
     }
 }

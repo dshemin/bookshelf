@@ -13,6 +13,7 @@ CREATE TABLE "users" (
     "password" VARCHAR(1024) NOT NULL,
     "role" VARCHAR(128) NOT NULL
 );
+CREATE UNIQUE INDEX idx_users_unique_login ON users(login);
 
 CREATE TABLE "books" (
     "id" BLOB PRIMARY KEY NOT NULL,

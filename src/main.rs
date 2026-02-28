@@ -17,18 +17,19 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    Server,
     /// Manage users.
-    User(UserArgs),
+    Users(UsersArgs),
 }
 
 #[derive(Debug, Args)]
-struct UserArgs {
+struct UsersArgs {
     #[command(subcommand)]
-    command: UserCommands,
+    command: UsersCommands,
 }
 
 #[derive(Debug, Subcommand)]
-enum UserCommands {
+enum UsersCommands {
     /// Adds new user with provided login and password.
     Add {
         /// New user's login.
@@ -90,16 +91,15 @@ async fn handle_cli(container: &Container) -> anyhow::Result<bool> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::User(args) => match args.command {
-            UserCommands::Add { login, password } => {
+        Commands::Server => {}
+        Commands::Users(args) => match args.command {
+            UsersCommands::Add { login, password } => {
                 println!("Create new user");
                 let user = users::User::new(login, password, String::new())?;
                 container.user.create(user).await?;
                 return Ok(false);
             }
-            _ => {}
         },
-        _ => {}
     };
 
     return Ok(true);

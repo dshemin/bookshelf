@@ -8,7 +8,7 @@ help:		## Show this help.
 
 .PHONY: backend
 backend:	## Run backend in watch mode.
-	cargo watch -x run
+	cargo watch -x run -- server
 
 .PHONY: lint
 lint: lint/rust	## Run all linters.
