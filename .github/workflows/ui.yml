@@ -21,7 +21,8 @@ defaults:
 
 jobs:
   build:
-
+    # Disable UI for now
+    if: false
     runs-on: ubuntu-latest
 
     steps:
