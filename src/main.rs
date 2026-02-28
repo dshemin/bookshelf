@@ -3,7 +3,7 @@ mod schema;
 mod sqlite;
 mod users;
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use clap::{Args, Parser, Subcommand};
 use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, *};
 use log::info;

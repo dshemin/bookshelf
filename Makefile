@@ -10,6 +10,10 @@ help:		## Show this help.
 backend:	## Run backend in watch mode.
 	cargo watch -x run -- server
 
+.PHONY: fmt
+fmt:
+	rustfmt $(RUSTFMT_FLAGS) $(RUSTFMT_TARGETS)
+
 .PHONY: lint
 lint: lint/rust	## Run all linters.
 

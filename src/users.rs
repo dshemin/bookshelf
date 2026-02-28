@@ -4,15 +4,15 @@ use crate::{
 };
 use anyhow::anyhow;
 use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
 use diesel::{
     insert_into,
     prelude::*,
     result::{DatabaseErrorKind, Error as DatabaseError},
 };
-use diesel_async::{RunQueryDsl, pooled_connection::deadpool::PoolError};
+use diesel_async::{pooled_connection::deadpool::PoolError, RunQueryDsl};
 use std::sync::LazyLock;
 use thiserror::Error;
 
