@@ -30,6 +30,6 @@ jobs:
     - uses: actions/checkout@v3
     - uses: Swatinem/rust-cache@v2
     - name: Lint
-      run: cargo install cargo-machete && emake lint
+      run: cargo install cargo-machete && make lint
     - name: Run tests
       run: cargo test --verbose
