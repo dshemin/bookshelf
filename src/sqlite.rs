@@ -62,6 +62,12 @@ impl ID {
     }
 }
 
+impl Into<String> for ID {
+    fn into(self) -> String {
+        self.0.to_string()
+    }
+}
+
 impl ToSql<Binary, Sqlite> for ID {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Sqlite>) -> serialize::Result {
         let bytes = self.0.as_bytes();

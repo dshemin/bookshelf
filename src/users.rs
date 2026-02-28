@@ -2,6 +2,7 @@ use crate::{
     schema::users::{self, dsl},
     sqlite::{self, ID},
 };
+use anyhow::anyhow;
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
@@ -13,7 +14,6 @@ use diesel::{
 };
 use diesel_async::{RunQueryDsl, pooled_connection::deadpool::PoolError};
 use std::sync::LazyLock;
-
 use thiserror::Error;
 
 #[derive(Queryable, Selectable, Insertable)]
@@ -47,6 +47,8 @@ impl User {
 
 static ARGON: LazyLock<Argon2> = LazyLock::new(Argon2::default);
 
+pub type UserCollection = Vec<User>;
+
 #[derive(Clone)]
 pub struct Service {
     pool: sqlite::ConnectionPool,
@@ -66,6 +68,15 @@ impl Service {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn list(&self) -> anyhow::Result<UserCollection> {
+        let mut conn = self.pool.get().await?;
+
+        users::table
+            .load::<User>(&mut conn)
+            .await
+            .map_err(|err| anyhow!(err))
     }
 }
 

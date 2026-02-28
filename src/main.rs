@@ -5,6 +5,7 @@ mod users;
 
 use axum::{Router, routing::get};
 use clap::{Args, Parser, Subcommand};
+use comfy_table::{modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, *};
 use log::info;
 use tokio::signal;
 
@@ -37,6 +38,8 @@ enum UsersCommands {
         /// New user's password.
         password: String,
     },
+    /// List all users.
+    Ls,
 }
 
 #[derive(Clone)]
@@ -97,6 +100,23 @@ async fn handle_cli(container: &Container) -> anyhow::Result<bool> {
                 println!("Create new user");
                 let user = users::User::new(login, password, String::new())?;
                 container.user.create(user).await?;
+                return Ok(false);
+            }
+            UsersCommands::Ls => {
+                let list = container.user.list().await?;
+                let mut table = Table::new();
+                table
+                    .load_preset(UTF8_FULL)
+                    .apply_modifier(UTF8_ROUND_CORNERS)
+                    .set_content_arrangement(ContentArrangement::DynamicFullWidth)
+                    .set_header(vec!["ID", "LOGIN"]);
+
+                list.iter().for_each(|user| {
+                    table.add_row(vec![user.id.into(), user.login.clone()]);
+                });
+
+                println!("{table}");
+
                 return Ok(false);
             }
         },
